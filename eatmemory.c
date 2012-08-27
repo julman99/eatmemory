@@ -34,7 +34,7 @@ int main(int argc, char *argv[]){
             char unit=arg[len - 1];
             long size=-1;
             int chunk=1024;
-            if(!isnumber(unit) ){
+            if(!isdigit(unit) ){
                 if(unit=='M' || unit=='G'){
                     arg[len-1]=0;
                     size=atol(arg) * (unit=='M'?1024*1024:1024*1024*1024);
