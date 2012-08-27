@@ -1,5 +1,3 @@
-CC=gcc
-
 all: eatmemory.c
 	$(CC) eatmemory.c -o eatmemory
 
