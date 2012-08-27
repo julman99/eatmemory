@@ -9,13 +9,18 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <stdbool.h>
 
-void eat(long total,int chunk){
+bool eat(long total,int chunk){
 	long i;
 	for(i=0;i<total;i+=chunk){
-		short *buffer=malloc(sizeof(char)*chunk);
+		short *buffer=malloc(sizeof(char)*chunk);     
+        if(buffer==NULL){
+            return false;
+        }
 		memset(buffer,0,chunk);
 	}
+    return true;
 }
 
 int main(int argc, char *argv[]){
@@ -45,9 +50,12 @@ int main(int argc, char *argv[]){
                 size=atoi(arg);
             }
             printf("Eating %ld bytes in chunks of %d...\n",size,chunk);
-            eat(size,chunk);
-            printf("Done, press any key to free the memory\n");
-            getchar();
+            if(eat(size,chunk)){
+                printf("Done, press any key to free the memory\n");
+                getchar();
+            }else{
+                printf("ERROR: Could not allocate the memory");
+            }
         }
     }
     
