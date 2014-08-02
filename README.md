@@ -8,6 +8,18 @@ Simple utility to allocate memory on a computer
 - Test behaviors on a machine when there is little memory available
 
 ##3. Usage
+
+###Installation
+
+```
+cd /tmp
+git clone https://github.com/julman99/eatmemory.git
+cd eatmemory
+sudo make install
+```
+
+###Running
+
 ```
 eatmemory <size>
 ```
