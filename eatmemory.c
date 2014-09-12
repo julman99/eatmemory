@@ -1,4 +1,4 @@
-/* 
+/*
  * File:   eatmemory.c
  * Author: Julio Viera <julio.viera@gmail.com>
  *
@@ -10,11 +10,24 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdbool.h>
+#include <unistd.h>
+
+size_t getTotalSystemMemory(){
+    long pages = sysconf(_SC_PHYS_PAGES);
+    long page_size = sysconf(_SC_PAGE_SIZE);
+    return pages * page_size;
+}
+
+size_t getFreeSystemMemory(){
+    long pages = sysconf(_SC_AVPHYS_PAGES);
+    long page_size = sysconf(_SC_PAGE_SIZE);
+    return pages * page_size;
+}
 
 bool eat(long total,int chunk){
 	long i;
 	for(i=0;i<total;i+=chunk){
-		short *buffer=malloc(sizeof(char)*chunk);     
+		short *buffer=malloc(sizeof(char)*chunk);
         if(buffer==NULL){
             return false;
         }
@@ -24,6 +37,9 @@ bool eat(long total,int chunk){
 }
 
 int main(int argc, char *argv[]){
+    printf("Currently total memory: %zd\n",getTotalSystemMemory());
+    printf("Currently avail memory: %zd\n",getFreeSystemMemory());
+
     int i;
     for(i=0;i<argc;i++){
         char *arg=argv[i];
@@ -33,6 +49,7 @@ int main(int argc, char *argv[]){
             printf("#          # Bytes      example: 1024\n");
             printf("#M         # Megabytes  example: 15M\n");
             printf("#G         # Gigabytes  example: 2G\n");
+            printf("#%%         # Percent    example: 50%%\n");
             printf("\n");
         }else if(i>0){
             int len=strlen(arg);
@@ -43,8 +60,13 @@ int main(int argc, char *argv[]){
                 if(unit=='M' || unit=='G'){
                     arg[len-1]=0;
                     size=atol(arg) * (unit=='M'?1024*1024:1024*1024*1024);
-                }else{
+                }
+                else if (unit=='%') {
+                    size = (atol(arg) * (long)getFreeSystemMemory())/100;
+                }
+                else{
                     printf("Invalid size format\n");
+                    exit(0);
                 }
             }else{
                 size=atoi(arg);
@@ -58,6 +80,6 @@ int main(int argc, char *argv[]){
             }
         }
     }
-    
+
 }
 
