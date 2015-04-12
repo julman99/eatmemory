@@ -12,6 +12,7 @@
 #include <stdbool.h>
 #include <unistd.h>
 
+#ifdef _SC_PHYS_PAGES
 size_t getTotalSystemMemory(){
     long pages = sysconf(_SC_PHYS_PAGES);
     long page_size = sysconf(_SC_PAGE_SIZE);
@@ -23,6 +24,7 @@ size_t getFreeSystemMemory(){
     long page_size = sysconf(_SC_PAGE_SIZE);
     return pages * page_size;
 }
+#endif
 
 bool eat(long total,int chunk){
 	long i;
@@ -37,8 +39,11 @@ bool eat(long total,int chunk){
 }
 
 int main(int argc, char *argv[]){
+
+#ifdef _SC_PHYS_PAGES
     printf("Currently total memory: %zd\n",getTotalSystemMemory());
     printf("Currently avail memory: %zd\n",getFreeSystemMemory());
+#endif
 
     int i;
     for(i=0;i<argc;i++){
@@ -49,7 +54,9 @@ int main(int argc, char *argv[]){
             printf("#          # Bytes      example: 1024\n");
             printf("#M         # Megabytes  example: 15M\n");
             printf("#G         # Gigabytes  example: 2G\n");
+#ifdef _SC_PHYS_PAGES            
             printf("#%%         # Percent    example: 50%%\n");
+#endif            
             printf("\n");
         }else if(i>0){
             int len=strlen(arg);
@@ -61,9 +68,11 @@ int main(int argc, char *argv[]){
                     arg[len-1]=0;
                     size=atol(arg) * (unit=='M'?1024*1024:1024*1024*1024);
                 }
+#ifdef _SC_PHYS_PAGES                
                 else if (unit=='%') {
                     size = (atol(arg) * (long)getFreeSystemMemory())/100;
                 }
+#endif                
                 else{
                     printf("Invalid size format\n");
                     exit(0);
