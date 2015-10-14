@@ -12,7 +12,11 @@
 #include <stdbool.h>
 #include <unistd.h>
 
-#ifdef _SC_PHYS_PAGES
+#if defined(_SC_PHYS_PAGES) && defined(_SC_AVPHYS_PAGES) && defined(_SC_PAGE_SIZE)
+#define MEMORY_PERCENTAGE
+#endif
+
+#ifdef MEMORY_PERCENTAGE
 size_t getTotalSystemMemory(){
     long pages = sysconf(_SC_PHYS_PAGES);
     long page_size = sysconf(_SC_PAGE_SIZE);
@@ -40,7 +44,7 @@ bool eat(long total,int chunk){
 
 int main(int argc, char *argv[]){
 
-#ifdef _SC_PHYS_PAGES
+#ifdef MEMORY_PERCENTAGE
     printf("Currently total memory: %zd\n",getTotalSystemMemory());
     printf("Currently avail memory: %zd\n",getFreeSystemMemory());
 #endif
@@ -54,7 +58,7 @@ int main(int argc, char *argv[]){
             printf("#          # Bytes      example: 1024\n");
             printf("#M         # Megabytes  example: 15M\n");
             printf("#G         # Gigabytes  example: 2G\n");
-#ifdef _SC_PHYS_PAGES            
+#ifdef MEMORY_PERCENTAGE            
             printf("#%%         # Percent    example: 50%%\n");
 #endif            
             printf("\n");
@@ -68,7 +72,7 @@ int main(int argc, char *argv[]){
                     arg[len-1]=0;
                     size=atol(arg) * (unit=='M'?1024*1024:1024*1024*1024);
                 }
-#ifdef _SC_PHYS_PAGES                
+#ifdef MEMORY_PERCENTAGE                
                 else if (unit=='%') {
                     size = (atol(arg) * (long)getFreeSystemMemory())/100;
                 }
