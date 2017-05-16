@@ -35,4 +35,18 @@ eatmemory 10M
 eatmemory 4G
 ```
 
+## 4. Docker image
 
+Example how to run a container which eats 128MB:
+
+```
+$ docker run -d --name 128 -e RAMINMB=128 zoobab/eatmemory:latest
+```
+
+Check the memory consumption of the container:
+
+```
+$ docker stats --no-stream=true 128
+CONTAINER           CPU %               MEM USAGE / LIMIT       MEM %               NET I/O             BLOCK I/O             PIDS
+128                 0.00%               133.9 MiB / 3.651 GiB   3.58%               2.01 kB / 1.08 kB   1.217 MB / 3.265 MB   4
+```
