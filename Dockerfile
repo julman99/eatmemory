@@ -7,11 +7,11 @@ RUN apk add make gcc musl-dev screen
 
 RUN mkdir -pv /root/code
 COPY . /root/code/
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
 RUN chown root.root -R /root/code
 WORKDIR /root/code
 RUN make
 RUN cp -v eatmemory /bin
 RUN chmod +x /bin/eatmemory
-ENTRYPOINT ["/entrypoint.sh"]
+ENTRYPOINT ["/docker-entrypoint.sh"]
