@@ -46,7 +46,7 @@ $ docker build . -t eatmemory
 Running a container to eat 128MB:
 
 ```
-$ docker run -d --name mycontainer eatmemory 128MB
+$ docker run -d --name mycontainer eatmemory 128M
 ```
 
 Check the memory consumption of the container:
