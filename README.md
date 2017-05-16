@@ -37,10 +37,16 @@ eatmemory 4G
 
 ## 4. Docker image
 
-Example how to run a container which eats 128MB:
+Building the container
 
 ```
-$ docker run -d --name mycontainer zoobab/eatmemory:latest 128MB
+$ docker build . -t eatmemory
+```
+
+Running a container to eat 128MB:
+
+```
+$ docker run -d --name mycontainer eatmemory 128MB
 ```
 
 Check the memory consumption of the container:
