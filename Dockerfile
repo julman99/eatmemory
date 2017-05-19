@@ -14,4 +14,4 @@ WORKDIR /root/code
 RUN make
 RUN cp -v eatmemory /bin
 RUN chmod +x /bin/eatmemory
-ENTRYPOINT ["/docker-entrypoint.sh"]
+ENTRYPOINT ["/bin/eatmemory"]
