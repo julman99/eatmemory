@@ -1,17 +1,19 @@
-FROM alpine:3.5
-MAINTAINER Benjamin Henrion <zoobab@gmail.com>
-LABEL Description="This image builds eatmemory so that you can specify the amount of MB as a docker env var." 
+FROM alpine:3.5 AS build
+MAINTAINER julman99
+LABEL Description="This image builds eatmemory"
 
 RUN apk update
-RUN apk add make gcc musl-dev screen
+RUN apk add make gcc musl-dev
 
 RUN mkdir -pv /root/code
 COPY . /root/code/
-COPY docker-entrypoint.sh /docker-entrypoint.sh
-RUN chmod +x /docker-entrypoint.sh
 RUN chown root.root -R /root/code
 WORKDIR /root/code
 RUN make
-RUN cp -v eatmemory /bin
+
+FROM alpine:3.5
+MAINTAINER julman99
+LABEL Description="This image runs eatmemory, a simple C program to allocate memory from the command line. Useful to test programs or systems under high memory usage conditions"
+COPY --from=build /root/code/eatmemory /bin
 RUN chmod +x /bin/eatmemory
 ENTRYPOINT ["/bin/eatmemory"]
