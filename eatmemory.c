@@ -86,8 +86,15 @@ int main(int argc, char *argv[]){
             }
             printf("Eating %ld bytes in chunks of %d...\n",size,chunk);
             if(eat(size,chunk)){
-                printf("Done, press any key to free the memory\n");
-                getchar();
+                if(isatty(fileno(stdin))) {
+                    printf("Done, press any key to free the memory\n");
+                    getchar();
+                } else {
+                    printf("Done, kill this process to free the memory\n");
+                    while(true) {
+                        sleep(1);
+                    }
+                }
             }else{
                 printf("ERROR: Could not allocate the memory");
             }
