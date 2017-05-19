@@ -37,24 +37,29 @@ eatmemory 4G
 
 ## 4. Docker image
 
-Building the container
+### Running a container to eat 128MB:
+
+**eatmemory** is [available](https://hub.docker.com/r/julman99/eatmemory) in Dockerhub, so you can just run it without going
+through the build process
 
 ```
-$ docker build . -t eatmemory
-```
-
-Running a container to eat 128MB:
-
-```
-$ docker run -d --name mycontainer eatmemory 128M
+$ docker run -d --name hungry_container julman99/eatmemory 128MB
 ```
 
 Check the memory consumption of the container:
 
 ```
-$ docker stats --no-stream=true mycontainer
+$ docker stats --no-stream=true hungry_container
 CONTAINER           CPU %               MEM USAGE / LIMIT       MEM %               NET I/O             BLOCK I/O             PIDS
-mycontainer         0.00%               133.9 MiB / 3.651 GiB   3.58%               2.01 kB / 1.08 kB   1.217 MB / 3.265 MB   4
+hungry_container         0.00%               133.9 MiB / 3.651 GiB   3.58%               2.01 kB / 1.08 kB   1.217 MB / 3.265 MB   4
+```
+
+### Building the container
+
+You need at least Docker 17.05 to use the [multi-stage](https://docs.docker.com/engine/userguide/eng-image/multistage-build/) build feature
+
+```
+$ docker build . -t eatmemory
 ```
 ## Support this project
 
