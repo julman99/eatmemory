@@ -51,7 +51,7 @@ Check the memory consumption of the container:
 ```
 $ docker stats --no-stream=true hungry_container
 CONTAINER           CPU %               MEM USAGE / LIMIT       MEM %               NET I/O             BLOCK I/O             PIDS
-hungry_container         0.00%               133.9 MiB / 3.651 GiB   3.58%               2.01 kB / 1.08 kB   1.217 MB / 3.265 MB   4
+hungry_container    0.00%               133.9 MiB / 3.651 GiB   3.58%               2.01 kB / 1.08 kB   1.217 MB / 3.265 MB   4
 ```
 
 ### Building the container
