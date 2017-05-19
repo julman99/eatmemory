@@ -43,7 +43,7 @@ eatmemory 4G
 through the build process
 
 ```
-$ docker run -d --name hungry_container julman99/eatmemory 128M
+$ docker run -d --rm --name hungry_container julman99/eatmemory 128M
 ```
 
 Check the memory consumption of the container:
