@@ -8,11 +8,9 @@ Simple utility to allocate memory on a computer
 - Test swap
 - Test behaviors on a machine when there is little memory available
 
-# 3. Usage
+# 3. Installation
 
-## Installation
-
-### Compile from sources
+## Compile from sources
 
 ```
 cd /tmp
@@ -21,17 +19,17 @@ cd eatmemory
 sudo make install
 ```
 
-### MacOS Homebrew
+## MacOS Homebrew
 ```
 brew tap julman99/toolbox
 brew install eatmemory
 ```
 
-### Using Docker
+## Using Docker
 
-See section 4
+See section 5
 
-## Running
+# 4. Running
 
 ```
 eatmemory <size>
@@ -47,7 +45,7 @@ eatmemory 10M
 eatmemory 4G
 ```
 
-# 4. Docker image
+# 5. Docker image
 
 ## Running a container to eat 128MB:
 
@@ -73,6 +71,6 @@ You need at least Docker 17.05 to use the [multi-stage](https://docs.docker.com/
 ```
 $ docker build . -t eatmemory
 ```
-# Support this project
+# 6. Support this project
 
 Bitcoin Address: `14LFRrMX3HmyAH9zQsnzYoVKDH6bVWiBu3`
