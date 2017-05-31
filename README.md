@@ -1,16 +1,18 @@
 eatmemory
 =========
 
-## 1. Introduction
+# 1. Introduction
 Simple utility to allocate memory on a computer
 
-## 2. What can I use this for?
+# 2. What can I use this for?
 - Test swap
 - Test behaviors on a machine when there is little memory available
 
-## 3. Usage
+# 3. Usage
 
-### Installation
+## Installation
+
+### Compile from sources
 
 ```
 cd /tmp
@@ -19,7 +21,17 @@ cd eatmemory
 sudo make install
 ```
 
-### Running
+### MacOS Homebrew
+```
+brew tap julman99/toolbox
+brew install eatmemory
+```
+
+### Using Docker
+
+See section 4
+
+## Running
 
 ```
 eatmemory <size>
@@ -27,7 +39,7 @@ eatmemory <size>
 
 Size is in number of bytes, megabytes or gigabytes.
 
-### Examples
+## Examples
 
 ```
 eatmemory 1024
@@ -35,9 +47,9 @@ eatmemory 10M
 eatmemory 4G
 ```
 
-## 4. Docker image
+# 4. Docker image
 
-### Running a container to eat 128MB:
+## Running a container to eat 128MB:
 
 **eatmemory** is [available](https://hub.docker.com/r/julman99/eatmemory) in Dockerhub, so you can just run it without going
 through the build process
@@ -54,13 +66,13 @@ CONTAINER           CPU %               MEM USAGE / LIMIT       MEM %           
 hungry_container    0.00%               133.9 MiB / 3.651 GiB   3.58%               2.01 kB / 1.08 kB   1.217 MB / 3.265 MB   4
 ```
 
-### Building the container
+## Building the container
 
 You need at least Docker 17.05 to use the [multi-stage](https://docs.docker.com/engine/userguide/eng-image/multistage-build/) build feature
 
 ```
 $ docker build . -t eatmemory
 ```
-## Support this project
+# Support this project
 
 Bitcoin Address: `14LFRrMX3HmyAH9zQsnzYoVKDH6bVWiBu3`
