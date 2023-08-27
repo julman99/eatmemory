@@ -1,4 +1,4 @@
-FROM alpine:3.5 AS build
+FROM alpine:3.18.3 AS build
 MAINTAINER julman99
 LABEL Description="This image builds eatmemory"
 
@@ -11,7 +11,7 @@ RUN chown root.root -R /root/code
 WORKDIR /root/code
 RUN make
 
-FROM alpine:3.5
+FROM alpine:3.18.3
 MAINTAINER julman99
 LABEL Description="This image runs eatmemory, a simple C program to allocate memory from the command line. Useful to test programs or systems under high memory usage conditions"
 COPY --from=build /root/code/eatmemory /bin
