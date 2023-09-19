@@ -87,6 +87,10 @@ int main(int argc, char *argv[]){
             }else{
                 size=atoi(arg);
             }
+            if(size <=0 ) {
+                printf("ERROR: Size must be a positive integer");
+                exit(1);
+            }
             printf("Eating %ld bytes in chunks of %d...\n",size,chunk);
             if(eat(size,chunk)){
                 if(isatty(fileno(stdin))) {
