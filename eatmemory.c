@@ -5,6 +5,8 @@
  * Created on August 27, 2012, 2:23 PM
  */
 
+#define VERSION "0.1.8"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -53,6 +55,7 @@ int main(int argc, char *argv[]){
     for(i=0;i<argc;i++){
         char *arg=argv[i];
         if(strcmp(arg, "-h")==0 || strcmp(arg,"-?")==0  || argc==1){
+            printf("eatmemory %s - %s\n\n", VERSION, "https://github.com/julman99/eatmemory");
             printf("Usage: eatmemory <size>\n");
             printf("Size can be specified in megabytes or gigabytes in the following way:\n");
             printf("#          # Bytes      example: 1024\n");
