@@ -40,7 +40,7 @@ ArgParser* configure_cmd() {
     return parser;
 }
 
-void help() {
+void print_help() {
     printf("eatmemory %s - %s\n\n", VERSION, "https://github.com/julman99/eatmemory");
     printf("Usage: eatmemory [-t <seconds>] <size>\n");
     printf("Size can be specified in megabytes or gigabytes in the following way:\n");
@@ -54,7 +54,6 @@ void help() {
     printf("Options:\n");
     printf("-t <seconds>  Exit after specified number of seconds\n");
     printf("\n");
-    exit(1);
 }
 
 bool eat(long total,int chunk){
@@ -78,8 +77,13 @@ int main(int argc, char *argv[]){
 
     ArgParser* parser = configure_cmd();
     ap_parse(parser, argc, argv);
-    if(ap_found(parser, "help") || ap_count_args(parser) != 1) {
-        help();
+    if(ap_found(parser, "help")) {
+        print_help();
+        exit(0);
+    }
+    if(ap_count_args(parser) != 1) {
+        print_help();
+        exit(1);
     }
 
     int timeout = ap_get_int_value(parser, "timeout");
