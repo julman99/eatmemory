@@ -1,9 +1,9 @@
-all: eatmemory.c
+all: args/args.c eatmemory.c
 
 ifeq ($(shell uname 2>/dev/null), AIX)
-	gcc -maix64 eatmemory.c -o eatmemory
+	gcc -maix64 args/args.c eatmemory.c -o eatmemory
 else
-	$(CC) eatmemory.c -o eatmemory
+	$(CC) args/args.c eatmemory.c -o eatmemory
 endif
 
 
