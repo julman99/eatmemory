@@ -89,6 +89,8 @@ int main(int argc, char *argv[]){
     int timeout = ap_get_int_value(parser, "timeout");
     char* memory_to_eat = ap_get_args(parser)[0];
 
+    ap_free(parser);
+
     int len=strlen(memory_to_eat);
     char unit=memory_to_eat[len - 1];
     long size=-1;
