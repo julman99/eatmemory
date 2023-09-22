@@ -1,5 +1,5 @@
 CC := gcc
-CFLAGS := -Wall -Wextra -std=c99
+CFLAGS := -Wall -Wextra -std=c99 -O3
 LDFLAGS :=
 SRC := $(shell find . -type f -name '*.c')
 EXE := eatmemory

@@ -56,16 +56,25 @@ void print_help() {
     printf("\n");
 }
 
-bool eat(long total,int chunk){
+short** eat(long total,int chunk){
 	long i;
+    short** allocations = malloc(sizeof(short*) * (total/chunk));
 	for(i=0;i<total;i+=chunk){
 		short *buffer=malloc(sizeof(char)*chunk);
         if(buffer==NULL){
-            return false;
+            return NULL;
         }
 		memset(buffer,0,chunk);
+        allocations[i/chunk] = buffer;
 	}
-    return true;
+    return allocations;
+}
+
+void digest(short** eaten, long total,int chunk) {
+    long i;
+    for(i=0;i<total;i+=chunk){
+        free(eaten[i/chunk]);
+    }
 }
 
 int main(int argc, char *argv[]){
@@ -117,7 +126,8 @@ int main(int argc, char *argv[]){
         exit(1);
     }
     printf("Eating %ld bytes in chunks of %d...\n",size,chunk);
-    if(eat(size,chunk)){
+    short** eaten = eat(size,chunk);
+    if(eaten){
         if(timeout < 0 && isatty(fileno(stdin))) {
             printf("Done, press ENTER to free the memory\n");
             getchar();
@@ -130,6 +140,7 @@ int main(int argc, char *argv[]){
                 sleep(1);
             }
         }
+        digest(eaten, size, chunk);
     }else{
         printf("ERROR: Could not allocate the memory");
     }
