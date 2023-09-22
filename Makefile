@@ -1,15 +1,33 @@
-all: args/args.c eatmemory.c
+CC := gcc
+CFLAGS := -Wall -Wextra -std=c99
+LDFLAGS :=
+SRC := $(shell find . -type f -name '*.c')
+EXE := eatmemory
+PREFIX := /usr/local
+INSTALL_DIR := $(PREFIX)/bin
 
-ifeq ($(shell uname 2>/dev/null), AIX)
-	gcc -maix64 args/args.c eatmemory.c -o eatmemory
-else
-	$(CC) args/args.c eatmemory.c -o eatmemory
-endif
+# Default target: Build the eatmemory program
+all: $(EXE)
 
+$(EXE): $(SRC)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
-install: eatmemory
-	mkdir -p $(PREFIX)/bin
-	install -m 0755 eatmemory $(PREFIX)/bin/
+# Install the executable to the specified PREFIX directory
+install: $(EXE)
+	mkdir -p $(INSTALL_DIR)
+	install -m 755 $< $(INSTALL_DIR)
 
+# Clean generated files
 clean:
-	rm -rf *o eatmemory
+	rm -f $(EXE)
+
+# Display help message
+help:
+	@echo "Usage: make [target] [PREFIX=/your/installation/path]"
+	@echo "Targets:"
+	@echo "  all (default) - Build the eatmemory program"
+	@echo "  install       - Install the executable to PREFIX/bin"
+	@echo "  clean         - Remove generated files"
+	@echo "  help          - Display this help message"
+
+.PHONY: all install clean help
