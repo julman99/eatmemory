@@ -119,7 +119,7 @@ int main(int argc, char *argv[]){
     printf("Eating %ld bytes in chunks of %d...\n",size,chunk);
     if(eat(size,chunk)){
         if(timeout < 0 && isatty(fileno(stdin))) {
-            printf("Done, press any key to free the memory\n");
+            printf("Done, press ENTER to free the memory\n");
             getchar();
         } else if (timeout >= 0) {
             printf("Done, sleeping for %d seconds before exiting...\n", timeout);
