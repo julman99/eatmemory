@@ -5,7 +5,7 @@
  * Created on August 27, 2012, 2:23 PM
  */
 
-#define VERSION "0.1.8"
+#define VERSION "0.1.9"
 
 #include <stdio.h>
 #include <stdlib.h>
