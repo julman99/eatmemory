@@ -1,4 +1,7 @@
 eatmemory
 
+*.o
+output/**/*
+
 .vscode
 .idea

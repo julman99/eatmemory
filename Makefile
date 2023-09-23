@@ -1,16 +1,26 @@
 CC := gcc
 CFLAGS := -Wall -Wextra -std=c99 -O3
 LDFLAGS :=
-SRC := $(shell find . -type f -name '*.c')
-EXE := eatmemory
+SRC_DIR := src
+INCLUDE_DIR := include
+OUTPUT_DIR := output
+SRC := $(wildcard $(SRC_DIR)/*.c)
+OBJ := $(patsubst $(SRC_DIR)/%.c,$(OUTPUT_DIR)/%.o,$(SRC))
+EXE := $(OUTPUT_DIR)/eatmemory
 PREFIX := /usr/local
 INSTALL_DIR := $(PREFIX)/bin
 
 # Default target: Build the eatmemory program
 all: $(EXE)
 
-$(EXE): $(SRC)
+$(OUTPUT_DIR)/%.o: $(SRC_DIR)/%.c | $(OUTPUT_DIR)
+	$(CC) $(CFLAGS) -c -o $@ $< -I$(INCLUDE_DIR)
+
+$(EXE): $(OBJ) | $(OUTPUT_DIR)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
+
+$(OUTPUT_DIR):
+	mkdir -p $(OUTPUT_DIR)
 
 # Install the executable to the specified PREFIX directory
 install: $(EXE)
@@ -19,7 +29,7 @@ install: $(EXE)
 
 # Clean generated files
 clean:
-	rm -f $(EXE)
+	rm -rf $(OUTPUT_DIR)
 
 # Display help message
 help:
@@ -31,3 +41,8 @@ help:
 	@echo "  help          - Display this help message"
 
 .PHONY: all install clean help
+
+
+
+
+
