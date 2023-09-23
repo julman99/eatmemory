@@ -13,7 +13,7 @@
 #include <ctype.h>
 #include <stdbool.h>
 #include <unistd.h>
-#include "args/args.h"
+#include "args.h"
 
 #if defined(_SC_PHYS_PAGES) && defined(_SC_AVPHYS_PAGES) && defined(_SC_PAGE_SIZE)
 #define MEMORY_PERCENTAGE
