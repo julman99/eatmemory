@@ -22,7 +22,6 @@ ArgParser* configure_cmd() {
     ArgParser* parser = ap_new_parser();
     ap_add_flag(parser, "help h ?");
     ap_add_int_opt(parser, "timeout t", -1);
-    ap_set_helptext(parser, "AAA");
     return parser;
 }
 
