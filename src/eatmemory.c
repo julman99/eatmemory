@@ -62,7 +62,7 @@ void digest(short** eaten, long total,int chunk) {
 }
 
 int main(int argc, char *argv[]){
-printf("eatmemory %s - %s\n\n", VERSION, "https://github.com/julman99/eatmemory");
+    printf("eatmemory %s - %s\n\n", VERSION, "https://github.com/julman99/eatmemory");
     
     printf("Currently total memory:     %s\n", bytes_to_string(getTotalSystemMemory(), tmpstr));
     printf("Currently availabke memory: %s\n", bytes_to_string(getFreeSystemMemory(), tmpstr));
