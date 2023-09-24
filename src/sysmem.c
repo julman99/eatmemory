@@ -37,10 +37,10 @@ long string_to_bytes(char * str) {
 char * bytes_to_string(long bytes, char * str){
     if(bytes < 1024) {
         sprintf(str, "%ld bytes", bytes);
-    } else if (bytes < 999 * TO_KB) {
+    } else if (bytes < 1 * TO_MB -1) {
         long kb = round(bytes / TO_KB);
         sprintf(str, "%ldK", kb);
-    } else if (bytes < 999 * TO_MB) {
+    } else if (bytes < 1 * TO_GB -1) {
         long mb = round(bytes / TO_MB);
         sprintf(str, "%ldM", mb);
     } else {
