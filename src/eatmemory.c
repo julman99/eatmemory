@@ -12,36 +12,21 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdbool.h>
+#include <sysmem.h>
+#include <args.h>
 #include <unistd.h>
-#include "args.h"
 
-#if defined(_SC_PHYS_PAGES) && defined(_SC_AVPHYS_PAGES) && defined(_SC_PAGE_SIZE)
-#define MEMORY_PERCENTAGE
-#endif
-
-#ifdef MEMORY_PERCENTAGE
-size_t getTotalSystemMemory(){
-    long pages = sysconf(_SC_PHYS_PAGES);
-    long page_size = sysconf(_SC_PAGE_SIZE);
-    return pages * page_size;
-}
-
-size_t getFreeSystemMemory(){
-    long pages = sysconf(_SC_AVPHYS_PAGES);
-    long page_size = sysconf(_SC_PAGE_SIZE);
-    return pages * page_size;
-}
-#endif
+char tmpstr[255];
 
 ArgParser* configure_cmd() {
     ArgParser* parser = ap_new_parser();
     ap_add_flag(parser, "help h ?");
     ap_add_int_opt(parser, "timeout t", -1);
+    ap_set_helptext(parser, "AAA");
     return parser;
 }
 
-void print_help() {
-    printf("eatmemory %s - %s\n\n", VERSION, "https://github.com/julman99/eatmemory");
+void print_help(ArgParser* parser) {
     printf("Usage: eatmemory [-t <seconds>] <size>\n");
     printf("Size can be specified in megabytes or gigabytes in the following way:\n");
     printf("#             # Bytes      example: 1024\n");
@@ -78,20 +63,19 @@ void digest(short** eaten, long total,int chunk) {
 }
 
 int main(int argc, char *argv[]){
-
-#ifdef MEMORY_PERCENTAGE
-    printf("Currently total memory: %zd\n",getTotalSystemMemory());
-    printf("Currently avail memory: %zd\n",getFreeSystemMemory());
-#endif
+printf("eatmemory %s - %s\n\n", VERSION, "https://github.com/julman99/eatmemory");
+    
+    printf("Currently total memory:     %s\n", bytes_to_string(getTotalSystemMemory(), tmpstr));
+    printf("Currently availabke memory: %s\n", bytes_to_string(getFreeSystemMemory(), tmpstr));
 
     ArgParser* parser = configure_cmd();
     ap_parse(parser, argc, argv);
     if(ap_found(parser, "help")) {
-        print_help();
+        print_help(parser);
         exit(0);
     }
     if(ap_count_args(parser) != 1) {
-        print_help();
+        print_help(parser);
         exit(1);
     }
 
@@ -99,33 +83,14 @@ int main(int argc, char *argv[]){
     char* memory_to_eat = ap_get_args(parser)[0];
 
     ap_free(parser);
-
-    int len=strlen(memory_to_eat);
-    char unit=memory_to_eat[len - 1];
-    long size=-1;
+    
+    long size=string_to_bytes(memory_to_eat);
     int chunk=1024;
-    if(!isdigit(unit) ){
-        if(unit=='M' || unit=='G'){
-            memory_to_eat[len-1]=0;
-            size=atol(memory_to_eat) * (unit=='M'?1024*1024:1024*1024*1024);
-        }
-#ifdef MEMORY_PERCENTAGE
-        else if (unit=='%') {
-            size = (atol(memory_to_eat) * (long)getFreeSystemMemory())/100;
-        }
-#endif
-        else{
-            printf("Invalid size format\n");
-            exit(0);
-        }
-    }else{
-        size=atoi(memory_to_eat);
-    }
     if(size <=0 ) {
-        printf("ERROR: Size must be a positive integer");
+        printf("ERROR: Memory to eat is invalid");
         exit(1);
     }
-    printf("Eating %ld bytes in chunks of %d...\n",size,chunk);
+    printf("Eating %s in chunks of %d bytes...\n",memory_to_eat,chunk);
     short** eaten = eat(size,chunk);
     if(eaten){
         if(timeout < 0 && isatty(fileno(stdin))) {
