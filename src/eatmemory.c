@@ -18,26 +18,30 @@
 #include <errors.h>
 
 char tmpstr[255];
+char tmpstr2[255];
 
 ArgParser* configure_cmd() {
     ArgParser* parser = ap_new_parser();
     ap_add_flag(parser, "help h ?");
     ap_add_int_opt(parser, "timeout t", -1);
+    ap_add_str_opt(parser, "chunk c", "1K");
     return parser;
 }
 
 void print_help(ArgParser* parser) {
     printf("Usage: eatmemory [-t <seconds>] <size>\n");
     printf("Size can be specified in megabytes or gigabytes in the following way:\n");
-    printf("#             # Bytes      example: 1024\n");
-    printf("#M            # Megabytes  example: 15M\n");
-    printf("#G            # Gigabytes  example: 2G\n");
+    printf("#                # Bytes      example: 1024\n");
+    printf("#M               # Megabytes  example: 15M\n");
+    printf("#G               # Gigabytes  example: 2G\n");
 #ifdef MEMORY_PERCENTAGE
-    printf("#%%           # Percent    example: 50%%\n");
+    printf("#%%             # Percent    example: 50%%\n");
 #endif
     printf("\n");
     printf("Options:\n");
-    printf("-t <seconds>  Exit after specified number of seconds\n");
+    printf("-t <seconds>     Exit after specified number of seconds.\n");
+    printf("-c <chunk_size>  Specify a custom chunk size in the same format\n");
+    printf("                 as the memory to be eaten. Defaults to 1024 bytes.\n");
     printf("\n");
 }
 
@@ -83,19 +87,22 @@ int main(int argc, char *argv[]){
 
     int timeout = ap_get_int_value(parser, "timeout");
     char* memory_to_eat = ap_get_args(parser)[0];
-
-    ap_free(parser);
     
-    long size=string_to_bytes(memory_to_eat);
-    int chunk=1024;
-    if(size <=0 ) {
+    long size = string_to_bytes(memory_to_eat);
+    char * chunk_str = ap_get_str_value(parser, "chunk");
+    int chunk = (int) string_to_bytes(chunk_str);
+    
+    if(size < 0 ) {
         print_error("Memory to eat is invalid", ERROR_MEMORY_ARG_INVALID);
     }
+
+    ap_free(parser);
+
     printf("Currently total memory:     %s\n", bytes_to_string(getTotalSystemMemory(), tmpstr));
     printf("Currently available memory: %s\n", bytes_to_string(getFreeSystemMemory(), tmpstr));
     printf("\n");
-    printf("Eating %s in chunks of %d bytes...\n",memory_to_eat,chunk);
-    short** eaten = eat(size,chunk);
+    printf("Eating %s in chunks of %s...\n", bytes_to_string(size, tmpstr), bytes_to_string(chunk, tmpstr2));
+    short** eaten = eat(size, chunk);
     if(eaten){
         if(timeout < 0 && isatty(fileno(stdin))) {
             printf("Done, press ENTER to free the memory\n");
