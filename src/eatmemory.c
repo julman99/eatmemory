@@ -15,6 +15,7 @@
 #include <sysmem.h>
 #include <args.h>
 #include <unistd.h>
+#include <errors.h>
 
 char tmpstr[255];
 
@@ -38,6 +39,11 @@ void print_help(ArgParser* parser) {
     printf("Options:\n");
     printf("-t <seconds>  Exit after specified number of seconds\n");
     printf("\n");
+}
+
+void print_error(char * error, int exit_code) {
+    printf("ERROR: %s\n", error);
+    exit(exit_code);
 }
 
 short** eat(long total,int chunk){
@@ -83,8 +89,7 @@ int main(int argc, char *argv[]){
     long size=string_to_bytes(memory_to_eat);
     int chunk=1024;
     if(size <=0 ) {
-        printf("ERROR: Memory to eat is invalid");
-        exit(1);
+        print_error("Memory to eat is invalid", ERROR_MEMORY_ARG_INVALID);
     }
     printf("Currently total memory:     %s\n", bytes_to_string(getTotalSystemMemory(), tmpstr));
     printf("Currently available memory: %s\n", bytes_to_string(getFreeSystemMemory(), tmpstr));
@@ -105,7 +110,7 @@ int main(int argc, char *argv[]){
         }
         digest(eaten, size, chunk);
     }else{
-        printf("ERROR: Could not allocate the memory");
+        print_error("Could not allocate the memory", ERROR_CANNOT_ALLOCATE_MEMORY);
     }
 
 }
