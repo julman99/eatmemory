@@ -96,7 +96,7 @@ int main(int argc, char *argv[]){
     
     long size = string_to_bytes(memory_to_eat);
     char * chunk_str = ap_get_str_value(parser, "chunk");
-    int chunk = (int) string_to_bytes(chunk_str);
+    long chunk = string_to_bytes(chunk_str);
     
     if(size < 0 ) {
         print_error("Memory to eat is invalid", ERROR_MEMORY_ARG_INVALID);
@@ -128,4 +128,3 @@ int main(int argc, char *argv[]){
     }
 
 }
-
