@@ -50,7 +50,7 @@ void print_error(char * error, int exit_code) {
     exit(exit_code);
 }
 
-short** eat(long total,int chunk){
+short** eat(long total, long chunk){
 	long i;
     short** allocations = malloc(sizeof(short*) * (total/chunk));
 	for(i=0;i<total;i+=chunk){
@@ -90,7 +90,7 @@ int main(int argc, char *argv[]){
     
     long size = string_to_bytes(memory_to_eat);
     char * chunk_str = ap_get_str_value(parser, "chunk");
-    int chunk = (int) string_to_bytes(chunk_str);
+    long chunk = string_to_bytes(chunk_str);
     
     if(size < 0 ) {
         print_error("Memory to eat is invalid", ERROR_MEMORY_ARG_INVALID);
