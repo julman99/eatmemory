@@ -11,7 +11,7 @@ const int TO_GB = 1024 * TO_MB;
 long string_to_bytes(char * str) {
     const size_t len = strlen(str);
     const char unit = str[len - 1];
-    const char value_numeric[50] = "";
+    char value_numeric[50] = "";
     
     strncpy(value_numeric, str, len);
     

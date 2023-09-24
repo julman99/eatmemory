@@ -28,7 +28,7 @@ ArgParser* configure_cmd() {
     return parser;
 }
 
-void print_help(ArgParser* parser) {
+void print_help() {
     printf("Usage: eatmemory [-t <seconds>] <size>\n");
     printf("Size can be specified in megabytes or gigabytes in the following way:\n");
     printf("#                # Bytes      example: 1024\n");
@@ -77,11 +77,11 @@ int main(int argc, char *argv[]){
     ArgParser* parser = configure_cmd();
     ap_parse(parser, argc, argv);
     if(ap_found(parser, "help")) {
-        print_help(parser);
+        print_help();
         exit(0);
     }
     if(ap_count_args(parser) != 1) {
-        print_help(parser);
+        print_help();
         exit(1);
     }
 
