@@ -17,8 +17,8 @@
 #include <unistd.h>
 #include <errors.h>
 
-char tmpstr[255];
-char tmpstr2[255];
+char tmpstr[255] = "";
+char tmpstr2[255] = "";
 
 ArgParser* configure_cmd() {
     ArgParser* parser = ap_new_parser();

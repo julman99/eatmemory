@@ -9,10 +9,12 @@ const int TO_MB = 1024 * TO_KB;
 const int TO_GB = 1024 * TO_MB;
 
 long string_to_bytes(char * str) {
-    int len = strlen(str);
-    char unit = str[len - 1];
-    char* value_numeric[50];
-    strncpy(value_numeric, str, len - 1);
+    const size_t len = strlen(str);
+    const char unit = str[len - 1];
+    const char value_numeric[50] = "";
+    
+    strncpy(value_numeric, str, len);
+    
     long number = atol(value_numeric);
     long bytes = number;
     if(!isdigit(unit) ) {
@@ -26,6 +28,7 @@ long string_to_bytes(char * str) {
             bytes = bytes * ((long)getFreeSystemMemory())/100;
         }
     }
+    
     return bytes;
 }
 
