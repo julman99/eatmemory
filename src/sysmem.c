@@ -36,16 +36,16 @@ long string_to_bytes(char * str) {
 
 char * bytes_to_string(long bytes, char * str){
     if(bytes < 1024) {
-        sprintf(str, "%ld", bytes);
+        sprintf(str, "%ld bytes", bytes);
     } else if (bytes < 999 * TO_KB) {
         long kb = round(bytes / TO_KB);
-        sprintf(str, "%ld%c", kb, 'K');
+        sprintf(str, "%ldK", kb);
     } else if (bytes < 999 * TO_MB) {
         long mb = round(bytes / TO_MB);
-        sprintf(str, "%ld%c", mb, 'M', bytes);
+        sprintf(str, "%ldM", mb);
     } else {
         long gb = round(bytes / TO_GB);
-        sprintf(str, "%ld%c", gb, 'G');
+        sprintf(str, "%ldG", gb);
     }
     return str;
 }
