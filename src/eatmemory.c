@@ -93,6 +93,7 @@ int main(int argc, char *argv[]){
     }
     printf("Currently total memory:     %s\n", bytes_to_string(getTotalSystemMemory(), tmpstr));
     printf("Currently available memory: %s\n", bytes_to_string(getFreeSystemMemory(), tmpstr));
+    printf("\n");
     printf("Eating %s in chunks of %d bytes...\n",memory_to_eat,chunk);
     short** eaten = eat(size,chunk);
     if(eaten){
