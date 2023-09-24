@@ -3,7 +3,6 @@
     #include <mach/mach.h>
     #include <mach/mach_host.h>
     size_t getTotalSystemMemory() {
-        host_t host = mach_host_self();
         vm_size_t page_size;
         mach_port_t host_port = mach_host_self();
         mach_msg_type_number_t count;
