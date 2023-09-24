@@ -64,9 +64,6 @@ void digest(short** eaten, long total,int chunk) {
 int main(int argc, char *argv[]){
     printf("eatmemory %s - %s\n\n", VERSION, "https://github.com/julman99/eatmemory");
     
-    printf("Currently total memory:     %s\n", bytes_to_string(getTotalSystemMemory(), tmpstr));
-    printf("Currently availabke memory: %s\n", bytes_to_string(getFreeSystemMemory(), tmpstr));
-
     ArgParser* parser = configure_cmd();
     ap_parse(parser, argc, argv);
     if(ap_found(parser, "help")) {
@@ -89,6 +86,8 @@ int main(int argc, char *argv[]){
         printf("ERROR: Memory to eat is invalid");
         exit(1);
     }
+    printf("Currently total memory:     %s\n", bytes_to_string(getTotalSystemMemory(), tmpstr));
+    printf("Currently available memory: %s\n", bytes_to_string(getFreeSystemMemory(), tmpstr));
     printf("Eating %s in chunks of %d bytes...\n",memory_to_eat,chunk);
     short** eaten = eat(size,chunk);
     if(eaten){
