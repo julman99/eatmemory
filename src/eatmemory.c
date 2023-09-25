@@ -50,11 +50,11 @@ void print_error(char * error, int exit_code) {
     exit(exit_code);
 }
 
-short** eat(long total, long chunk){
+short** eat(unsigned long total, unsigned long chunk){
 	long i;
     short** allocations = malloc(sizeof(short*) * (total/chunk));
 	for(i=0;i<total;i+=chunk){
-		short *buffer=malloc(sizeof(char)*chunk);
+		short *buffer=malloc(8UL * chunk);
         if(buffer==NULL){
             return NULL;
         }
