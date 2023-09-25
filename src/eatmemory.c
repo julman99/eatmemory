@@ -52,25 +52,37 @@ void print_error(char * error, int exit_code) {
     exit(exit_code);
 }
 
-short** eat(size_t total, size_t chunk){
-    short** allocations = malloc(sizeof(short*) * (total/chunk));
-	for(size_t i=0;i<total;i+=chunk){        
-        size_t allocate = MIN(chunk, total - i);
-        printf("OK, %ld,%ld,%ld\n", i, total, allocate);
-		void *buffer=malloc(allocate);
-        if(buffer==NULL){
+void** eat(size_t total, size_t chunk) {
+    unsigned long iterations = total/chunk;
+    if(total % chunk > 0) {
+        iterations++;
+    }
+
+    void** allocations = malloc(sizeof(void*) * iterations);
+    for(unsigned int i=0; i<iterations; i++){
+        allocations[i] = NULL;
+    }
+
+    size_t allocated = 0;
+    for(unsigned long i=0; i<iterations; i++){
+        size_t allocate = MIN(chunk, total - allocated);
+        void *buffer = malloc(allocate);
+        if(buffer == NULL){
             return NULL;
         }
-		memset(buffer,0,allocate);
-        allocations[i/chunk] = buffer;
-	}
+        memset(buffer,0,allocate);
+        allocations[i] = buffer;
+        allocated += allocate;
+    }
     return allocations;
 }
 
-void digest(short** eaten, long total,int chunk) {
-    long i;
-    for(i=0;i<total;i+=chunk){
-        free(eaten[i/chunk]);
+void digest(void** eaten, long total,int chunk) {
+    unsigned long iterations = total/chunk;
+    for(unsigned long i=0; i < iterations; i++){
+        if(eaten[i] != NULL) {
+            free(eaten[i]);
+        }
     }
 }
 
@@ -105,7 +117,7 @@ int main(int argc, char *argv[]){
     printf("Currently available memory: %s\n", bytes_to_string(getFreeSystemMemory(), tmpstr));
     printf("\n");
     printf("Eating %s in chunks of %s...\n", bytes_to_string(size, tmpstr), bytes_to_string(chunk, tmpstr2));
-    short** eaten = eat(size, chunk);
+    void** eaten = eat(size, chunk);
     if(eaten){
         if(timeout < 0 && isatty(fileno(stdin))) {
             printf("Done, press ENTER to free the memory\n");
@@ -119,10 +131,9 @@ int main(int argc, char *argv[]){
                 sleep(1);
             }
         }
-        digest(eaten, size, chunk);
     }else{
         print_error("Could not allocate the memory", ERROR_CANNOT_ALLOCATE_MEMORY);
     }
-
+    digest(eaten, size, chunk);
 }
 
