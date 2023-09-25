@@ -17,6 +17,8 @@
 #include <unistd.h>
 #include <errors.h>
 
+#define MIN(a,b) ((a) < (b) ? (a) : (b))
+
 char tmpstr[255] = "";
 char tmpstr2[255] = "";
 
@@ -50,15 +52,16 @@ void print_error(char * error, int exit_code) {
     exit(exit_code);
 }
 
-short** eat(unsigned long total, unsigned long chunk){
-	long i;
+short** eat(size_t total, size_t chunk){
     short** allocations = malloc(sizeof(short*) * (total/chunk));
-	for(i=0;i<total;i+=chunk){
-		short *buffer=malloc(8UL * chunk);
+	for(size_t i=0;i<total;i+=chunk){        
+        size_t allocate = MIN(chunk, total - i);
+        printf("OK, %ld,%ld,%ld\n", i, total, allocate);
+		void *buffer=malloc(allocate);
         if(buffer==NULL){
             return NULL;
         }
-		memset(buffer,0,chunk);
+		memset(buffer,0,allocate);
         allocations[i/chunk] = buffer;
 	}
     return allocations;
