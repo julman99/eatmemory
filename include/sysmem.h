@@ -2,7 +2,7 @@
 
 #ifdef __APPLE__
     #define SYSMEM_MODE_APPLE
-#elif __linux__
+#elif defined(_SC_PHYS_PAGES) && defined(_SC_AVPHYS_PAGES) && defined(_SC_PAGE_SIZE)
     #define SYSMEM_MODE_LINUX
 #else
     #define SYSMEM_MODE_NONE
