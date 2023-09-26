@@ -1,5 +1,5 @@
 CC := gcc
-CFLAGS := -Wall -Wextra -std=c99 -O3
+CFLAGS := -Wall -Wextra -std=c99 -O3 -g
 LDFLAGS :=
 SRC_DIR := src
 INCLUDE_DIR := include
