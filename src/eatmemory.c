@@ -31,6 +31,7 @@ ArgParser* configure_cmd() {
 }
 
 void print_help() {
+    printf("eatmemory %s - %s\n\n", VERSION, "https://github.com/julman99/eatmemory");
     printf("Usage: eatmemory [-t <seconds>] <size>\n");
     printf("Size can be specified in megabytes or gigabytes in the following way:\n");
     printf("#                # Bytes      example: 1024\n");
@@ -87,8 +88,6 @@ void digest(void** eaten, long total,int chunk) {
 }
 
 int main(int argc, char *argv[]){
-    printf("eatmemory %s - %s\n\n", VERSION, "https://github.com/julman99/eatmemory");
-    
     ArgParser* parser = configure_cmd();
     ap_parse(parser, argc, argv);
     if(ap_found(parser, "help")) {
