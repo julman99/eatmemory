@@ -53,21 +53,18 @@ void print_error(char * error, int exit_code) {
     exit(exit_code);
 }
 
-void** eat(size_t total, size_t chunk) {
+int8_t** eat(size_t total, size_t chunk) {
     unsigned long iterations = total/chunk;
     if(total % chunk > 0) {
         iterations++;
     }
-
-    void** allocations = malloc(sizeof(void*) * iterations);
-    for(unsigned int i=0; i<iterations; i++){
-        allocations[i] = NULL;
-    }
+    int8_t** allocations = malloc(sizeof(int8_t *) * iterations);
+    memset(allocations, 0, sizeof(int8_t *) * iterations);
 
     size_t allocated = 0;
     for(unsigned long i=0; i<iterations; i++){
         size_t allocate = MIN(chunk, total - allocated);
-        void *buffer = malloc(allocate);
+        int8_t *buffer = malloc(sizeof(int8_t) * allocate);
         if(buffer == NULL){
             return NULL;
         }
@@ -80,11 +77,15 @@ void** eat(size_t total, size_t chunk) {
 
 void digest(void** eaten, long total,int chunk) {
     unsigned long iterations = total/chunk;
+    if(total % chunk > 0) {
+        iterations++;
+    }
     for(unsigned long i=0; i < iterations; i++){
         if(eaten[i] != NULL) {
             free(eaten[i]);
         }
     }
+    free(eaten);
 }
 
 int main(int argc, char *argv[]){
