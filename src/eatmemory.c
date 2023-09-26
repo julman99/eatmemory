@@ -68,7 +68,9 @@ int8_t** eat(size_t total, size_t chunk) {
         if(buffer == NULL){
             return NULL;
         }
-        memset(buffer,0,allocate);
+        for(unsigned long j=0; j<sizeof(int8_t) * allocate; j++) {
+            buffer[j] = 1;
+        }
         allocations[i] = buffer;
         allocated += allocate;
     }
