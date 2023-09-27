@@ -1,11 +1,12 @@
 #include <stdio.h>
+#include <stdint.h>
 
 #ifdef __APPLE__
     #define SYSMEM_MODE_APPLE
 #elif defined(_SC_PHYS_PAGES) && defined(_SC_AVPHYS_PAGES) && defined(_SC_PAGE_SIZE)
     #define SYSMEM_MODE_LINUX
 #else
-    #define SYSMEM_MODE_NONE
+    #define SYSMEM_MODE_UNKOWN
 #endif
 
 //system memory stats

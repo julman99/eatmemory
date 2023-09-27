@@ -3,6 +3,7 @@
 #include <ctype.h>
 #include <math.h>
 #include <stdlib.h>
+#include <stdint.h>
 
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
 
