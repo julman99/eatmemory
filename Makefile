@@ -1,4 +1,4 @@
-CC := gcc
+CC ?= gcc
 CFLAGS := -Wall -Wextra -std=c99 -O2 -g
 LDFLAGS :=
 SRC_DIR := src
