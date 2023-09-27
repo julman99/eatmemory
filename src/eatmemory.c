@@ -18,8 +18,6 @@
 #include <unistd.h>
 #include <errors.h>
 
-#define MIN(a,b) ((a) < (b) ? (a) : (b))
-
 char tmpstr[255] = "";
 char tmpstr2[255] = "";
 
@@ -54,43 +52,6 @@ void print_error(char * error, int exit_code) {
     exit(exit_code);
 }
 
-int8_t** eat(size_t total, size_t chunk) {
-    unsigned long iterations = total/chunk;
-    if(total % chunk > 0) {
-        iterations++;
-    }
-    int8_t** allocations = malloc(sizeof(int8_t *) * iterations);
-    memset(allocations, 0, sizeof(int8_t *) * iterations);
-
-    size_t allocated = 0;
-    for(unsigned long i=0; i<iterations; i++){
-        size_t allocate = MIN(chunk, total - allocated);
-        int8_t *buffer = malloc(sizeof(int8_t) * allocate);
-        if(buffer == NULL){
-            return NULL;
-        }
-        for(unsigned long j=0; j<sizeof(int8_t) * allocate; j++) {
-            buffer[j] = 1;
-        }
-        allocations[i] = buffer;
-        allocated += allocate;
-    }
-    return allocations;
-}
-
-void digest(void** eaten, long total,int chunk) {
-    unsigned long iterations = total/chunk;
-    if(total % chunk > 0) {
-        iterations++;
-    }
-    for(unsigned long i=0; i < iterations; i++){
-        if(eaten[i] != NULL) {
-            free(eaten[i]);
-        }
-    }
-    free(eaten);
-}
-
 int main(int argc, char *argv[]){
     ArgParser* parser = configure_cmd();
     ap_parse(parser, argc, argv);
@@ -120,7 +81,7 @@ int main(int argc, char *argv[]){
     printf("Currently available memory: %s\n", bytes_to_string(getFreeSystemMemory(), tmpstr));
     printf("\n");
     printf("Eating %s in chunks of %s...\n", bytes_to_string(size, tmpstr), bytes_to_string(chunk, tmpstr2));
-    void** eaten = eat(size, chunk);
+    int8_t** eaten = eat(size, chunk);
     if(eaten){
         if(timeout < 0 && isatty(fileno(stdin))) {
             printf("Done, press ENTER to free the memory\n");

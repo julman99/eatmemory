@@ -4,6 +4,8 @@
 #include <math.h>
 #include <stdlib.h>
 
+#define MIN(a,b) ((a) < (b) ? (a) : (b))
+
 const int TO_KB = 1024;
 const int TO_MB = 1024 * TO_KB;
 const int TO_GB = 1024 * TO_MB;
@@ -50,4 +52,42 @@ char * bytes_to_string(long bytes, char * str){
         sprintf(str, "%ldG", gb);
     }
     return str;
+}
+
+
+int8_t** eat(size_t total, size_t chunk) {
+    unsigned long iterations = total/chunk;
+    if(total % chunk > 0) {
+        iterations++;
+    }
+    int8_t** allocations = malloc(sizeof(int8_t *) * iterations);
+    memset(allocations, 0, sizeof(int8_t *) * iterations);
+
+    size_t allocated = 0;
+    for(unsigned long i=0; i<iterations; i++){
+        size_t allocate = MIN(chunk, total - allocated);
+        int8_t *buffer = malloc(sizeof(int8_t) * allocate);
+        if(buffer == NULL){
+            return NULL;
+        }
+        for(unsigned long j=0; j<sizeof(int8_t) * allocate; j++) {
+            buffer[j] = 1;
+        }
+        allocations[i] = buffer;
+        allocated += allocate;
+    }
+    return allocations;
+}
+
+void digest(int8_t** eaten, long total,int chunk) {
+    unsigned long iterations = total/chunk;
+    if(total % chunk > 0) {
+        iterations++;
+    }
+    for(unsigned long i=0; i < iterations; i++){
+        if(eaten[i] != NULL) {
+            free(eaten[i]);
+        }
+    }
+    free(eaten);
 }
