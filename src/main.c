@@ -25,7 +25,7 @@ ArgParser* configure_cmd() {
     ArgParser* parser = ap_new_parser();
     ap_add_flag(parser, "help h ?");
     ap_add_int_opt(parser, "timeout t", -1);
-    ap_add_str_opt(parser, "chunk c", "1K");
+    ap_add_str_opt(parser, "chunk-size s", "1K");
     return parser;
 }
 
@@ -42,7 +42,7 @@ void print_help() {
     printf("\n");
     printf("Options:\n");
     printf("-t <seconds>     Exit after specified number of seconds.\n");
-    printf("-c <chunk_size>  Specify a custom chunk size in the same format\n");
+    printf("-s <chunk_size>  Specify a custom chunk size in the same format\n");
     printf("                 as the memory to be eaten. Defaults to 1024 bytes.\n");
     printf("\n");
 }
@@ -68,7 +68,7 @@ int main(int argc, char *argv[]){
     char* memory_to_eat = ap_get_args(parser)[0];
     
     long size = string_to_bytes(memory_to_eat);
-    char * chunk_str = ap_get_str_value(parser, "chunk");
+    char * chunk_str = ap_get_str_value(parser, "chunk-size");
     long chunk = string_to_bytes(chunk_str);
     
     if(size < 0 ) {
