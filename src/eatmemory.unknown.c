@@ -1,5 +1,5 @@
-#include <sysmem.h>
-#ifdef SYSMEM_MODE_NONE
+#include <eatmemory.h>
+#ifdef SYSMEM_MODE_UNKOWN
 
 size_t getTotalSystemMemory(){
     return -1;
