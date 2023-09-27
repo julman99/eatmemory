@@ -8,7 +8,14 @@
     #define SYSMEM_MODE_NONE
 #endif
 
+//system memory stats
 size_t getTotalSystemMemory();
 size_t getFreeSystemMemory();
+
+//mem string parsing
 long string_to_bytes(char * str);
-char * bytes_to_string(long bytes, char * str); 
+char * bytes_to_string(long bytes, char * str);
+
+//mem allocation
+int8_t** eat(size_t total, size_t chunk);
+void digest(int8_t** eaten, long total,int chunk);
