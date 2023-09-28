@@ -6,6 +6,7 @@
 #include <stdint.h>
 
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
+#define MAX_VALUE_STR_SIZE 255
 
 const int TO_KB = 1024;
 const int TO_MB = 1024 * TO_KB;
@@ -14,9 +15,9 @@ const int TO_GB = 1024 * TO_MB;
 long string_to_bytes(char * str) {
     const size_t len = strlen(str);
     char unit = str[len - 1];
-    char value_numeric[50] = "";
+    char value_numeric[MAX_VALUE_STR_SIZE] = "";
     
-    strncpy(value_numeric, str, len);
+    strncpy(value_numeric, str, MAX_VALUE_STR_SIZE);
     
     long number = atol(value_numeric);
     long bytes = number;
