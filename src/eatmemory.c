@@ -46,13 +46,13 @@ char * bytes_to_string(size_t bytes, char * str){
     if (bytes < 1024) {
         sprintf(str, "%zu bytes", bytes);
     } else if (bytes < 1 * TO_MB -1) {
-        long kb = round(bytes / TO_KB);
+        size_t kb = round(bytes / TO_KB);
         sprintf(str, "%zuK", kb);
     } else if (bytes < 1 * TO_GB -1) {
-        long mb = round(bytes / TO_MB);
+        size_t mb = round(bytes / TO_MB);
         sprintf(str, "%zuM", mb);
     } else {
-        long gb = round(bytes / TO_GB);
+        size_t gb = round(bytes / TO_GB);
         sprintf(str, "%zuG", gb);
     }
     return str;
