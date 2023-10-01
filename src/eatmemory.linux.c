@@ -3,16 +3,14 @@
 #include <stdio.h>
 #include <unistd.h>
 
-size_t getTotalSystemMemory(){
+void get_system_memory_stats(struct system_memory_stats* stats) {
+    stats->supported = true;
     long pages = sysconf(_SC_PHYS_PAGES);
     long page_size = sysconf(_SC_PAGE_SIZE);
-    return pages * page_size;
-}
+    stats->total = pages * page_size;
 
-size_t getFreeSystemMemory(){
-    long pages = sysconf(_SC_AVPHYS_PAGES);
-    long page_size = sysconf(_SC_PAGE_SIZE);
-    return pages * page_size;
+    long free_pages = sysconf(_SC_AVPHYS_PAGES);
+    stats->free = free_pages * page_size;
 }
 
 #endif

@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 #ifdef __APPLE__
     #define SYSMEM_MODE_APPLE
@@ -9,9 +10,14 @@
     #define SYSMEM_MODE_UNKOWN
 #endif
 
+
+struct system_memory_stats {
+    bool supported;
+    size_t total;
+    size_t free;
+};
 //system memory stats
-size_t getTotalSystemMemory();
-size_t getFreeSystemMemory();
+void get_system_memory_stats(struct system_memory_stats* stats);
 
 //mem string parsing
 size_t string_to_bytes(char * str);

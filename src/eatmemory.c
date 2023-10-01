@@ -18,7 +18,9 @@ size_t string_to_bytes(char * str) {
     char value_numeric[MAX_VALUE_STR_SIZE] = "";
     
     strncpy(value_numeric, str, MAX_VALUE_STR_SIZE);
-    
+
+    struct system_memory_stats memory_stats;
+    get_system_memory_stats(&memory_stats);
     long number = atol(value_numeric);
     long bytes = number;
     if(!isdigit(unit) ) {
@@ -30,7 +32,7 @@ size_t string_to_bytes(char * str) {
         } else if(unit=='G') {
             bytes = number * TO_GB;
         } else if (unit=='%') {
-            bytes = bytes * ((long)getFreeSystemMemory())/100;
+            bytes = bytes * memory_stats.free / 100;
         }
     }
     

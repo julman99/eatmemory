@@ -19,6 +19,8 @@
 #include "errors.h"
 #include "math.h"
 
+#define STR_NA "N/A"
+
 char tmpstr[255] = "";
 char tmpstr2[255] = "";
 
@@ -78,8 +80,10 @@ int main(int argc, char *argv[]){
 
     ap_free(parser);
 
-    printf("Currently total memory:     %s\n", bytes_to_string(getTotalSystemMemory(), tmpstr));
-    printf("Currently available memory: %s\n", bytes_to_string(getFreeSystemMemory(), tmpstr));
+    struct system_memory_stats memory_stats;
+    get_system_memory_stats(&memory_stats);
+    printf("Currently total memory:     %s\n", memory_stats.supported ? bytes_to_string(memory_stats.total, tmpstr) : STR_NA);
+    printf("Currently available memory: %s\n", memory_stats.supported ? bytes_to_string(memory_stats.free, tmpstr) : STR_NA);
     printf("\n");
     printf("Eating %s in chunks of %s...\n", bytes_to_string(size, tmpstr), bytes_to_string(chunk, tmpstr2));
     int8_t** eaten = eat(size, chunk);
