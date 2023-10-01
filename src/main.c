@@ -6,6 +6,8 @@
  */
 
 #define VERSION "0.1.10"
+#define _POSIX_C_SOURCE 1
+#define STR_NA "N/A"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,8 +20,6 @@
 #include <unistd.h>
 #include "errors.h"
 #include "math.h"
-
-#define STR_NA "N/A"
 
 char tmpstr[255] = "";
 char tmpstr2[255] = "";
