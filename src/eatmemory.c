@@ -21,16 +21,18 @@ size_t string_to_bytes(char * str) {
 
     struct system_memory_stats memory_stats;
     get_system_memory_stats(&memory_stats);
-    long number = atol(value_numeric);
-    long bytes = number;
+    size_t bytes;
+    if(sscanf(value_numeric, "%zu", &bytes) == 0) {
+        return 0;
+    }
     if(!isdigit(unit) ) {
         unit = toupper(unit);
         if(unit == 'K') {
-            bytes = number * TO_KB;
+            bytes = bytes * TO_KB;
         } else if(unit=='M') {
-            bytes = number * TO_MB;
+            bytes = bytes * TO_MB;
         } else if(unit=='G') {
-            bytes = number * TO_GB;
+            bytes = bytes * TO_GB;
         } else if (unit=='%') {
             bytes = bytes * memory_stats.free / 100;
         }
