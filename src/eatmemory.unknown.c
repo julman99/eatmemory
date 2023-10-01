@@ -1,4 +1,4 @@
-#include <eatmemory.h>
+#include "eatmemory.h"
 #ifdef SYSMEM_MODE_UNKOWN
 
 size_t getTotalSystemMemory(){

@@ -1,7 +1,7 @@
-#include <eatmemory.h>
+#include "eatmemory.h"
 #ifdef SYSMEM_MODE_APPLE
-    #include <mach/mach.h>
     #include <mach/mach_host.h>
+
     size_t getTotalSystemMemory() {
         vm_size_t page_size;
         mach_port_t host_port = mach_host_self();
@@ -12,10 +12,11 @@
 
         count = sizeof(vm_stat) / sizeof(natural_t);
         if (host_statistics(host_port, HOST_VM_INFO, (host_info_t)&vm_stat, &count) != KERN_SUCCESS) {
-            return 0; // Failed to get memory statistics
+            return -1; // Failed to get memory statistics
         }
 
-        natural_t pages = vm_stat.wire_count + vm_stat.active_count + vm_stat.inactive_count + vm_stat.free_count;
+        natural_t pages = vm_stat.wire_count + vm_stat.active_count + vm_stat.inactive_count + vm_stat.free_count +
+                vm_stat.speculative_count + vm_stat.purgeable_count;
         return (size_t)pages * (size_t)page_size;
     }
 
@@ -28,10 +29,10 @@
 
         vm_statistics_data_t vm_stat;
         if (host_statistics(host_port, HOST_VM_INFO, (host_info_t)&vm_stat, &host_size) != KERN_SUCCESS) {
-            return 0; // Failed to get memory statistics
+            return -1; // Failed to get memory statistics
         }
 
-        natural_t free_memory = vm_stat.free_count;
+        natural_t free_memory = vm_stat.free_count + vm_stat.inactive_count;
         return (size_t)free_memory * (size_t)page_size;
     }
 

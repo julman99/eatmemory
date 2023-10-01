@@ -1,4 +1,4 @@
-#include <eatmemory.h>
+#include "eatmemory.h"
 #include <string.h>
 #include <ctype.h>
 #include <math.h>
@@ -12,7 +12,7 @@ const int TO_KB = 1024;
 const int TO_MB = 1024 * TO_KB;
 const int TO_GB = 1024 * TO_MB;
 
-long string_to_bytes(char * str) {
+size_t string_to_bytes(char * str) {
     const size_t len = strlen(str);
     char unit = str[len - 1];
     char value_numeric[MAX_VALUE_STR_SIZE] = "";
@@ -39,20 +39,18 @@ long string_to_bytes(char * str) {
 
 
 
-char * bytes_to_string(long bytes, char * str){
-    if(bytes < 0) {
-        sprintf(str, "N/A");
-    } else if (bytes < 1024) {
-        sprintf(str, "%ld bytes", bytes);
+char * bytes_to_string(size_t bytes, char * str){
+    if (bytes < 1024) {
+        sprintf(str, "%zu bytes", bytes);
     } else if (bytes < 1 * TO_MB -1) {
         long kb = round(bytes / TO_KB);
-        sprintf(str, "%ldK", kb);
+        sprintf(str, "%zuK", kb);
     } else if (bytes < 1 * TO_GB -1) {
         long mb = round(bytes / TO_MB);
-        sprintf(str, "%ldM", mb);
+        sprintf(str, "%zuM", mb);
     } else {
         long gb = round(bytes / TO_GB);
-        sprintf(str, "%ldG", gb);
+        sprintf(str, "%zuG", gb);
     }
     return str;
 }
@@ -82,7 +80,7 @@ int8_t** eat(size_t total, size_t chunk) {
     return allocations;
 }
 
-void digest(int8_t** eaten, long total,int chunk) {
+void digest(int8_t** eaten, size_t total, size_t chunk) {
     unsigned long iterations = total/chunk;
     if(total % chunk > 0) {
         iterations++;

@@ -14,9 +14,9 @@ size_t getTotalSystemMemory();
 size_t getFreeSystemMemory();
 
 //mem string parsing
-long string_to_bytes(char * str);
-char * bytes_to_string(long bytes, char * str);
+size_t string_to_bytes(char * str);
+char * bytes_to_string(size_t bytes, char * str);
 
 //mem allocation
 int8_t** eat(size_t total, size_t chunk);
-void digest(int8_t** eaten, long total,int chunk);
+void digest(int8_t** eaten, size_t total, size_t chunk);

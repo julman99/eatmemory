@@ -13,10 +13,11 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdbool.h>
-#include <eatmemory.h>
-#include <args.h>
+#include "eatmemory.h"
+#include "args.h"
 #include <unistd.h>
-#include <errors.h>
+#include "errors.h"
+#include "math.h"
 
 char tmpstr[255] = "";
 char tmpstr2[255] = "";
@@ -36,14 +37,14 @@ void print_help() {
     printf("#                # Bytes      example: 1024\n");
     printf("#M               # Megabytes  example: 15M\n");
     printf("#G               # Gigabytes  example: 2G\n");
-#ifdef MEMORY_PERCENTAGE
-    printf("#%%             # Percent    example: 50%%\n");
-#endif
+    printf("#%%               # Percent    example: 50%%\n");
     printf("\n");
     printf("Options:\n");
     printf("-t <seconds>     Exit after specified number of seconds.\n");
     printf("-s <chunk_size>  Specify a custom chunk size in the same format\n");
-    printf("                 as the memory to be eaten. Defaults to 1024 bytes.\n");
+    printf("                 as the memory to be eaten.\n");
+    printf("                 Default: 1024 bytes\n");
+    printf("                 Max:     %s\n", bytes_to_string(SIZE_MAX, tmpstr));
     printf("\n");
 }
 
