@@ -28,6 +28,7 @@ size_t string_to_bytes(char * str, eatmemory_error * error);
 char * bytes_to_string(size_t bytes, char * str);
 
 //mem allocation
+size_t get_auto_chunk_size(size_t bytes);
 int8_t** eat(size_t total, size_t chunk);
 void digest(int8_t** eaten, size_t total, size_t chunk);
 #endif

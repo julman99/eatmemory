@@ -74,6 +74,17 @@ char * bytes_to_string(size_t bytes, char * str){
     return str;
 }
 
+size_t get_auto_chunk_size(size_t bytes) {
+    if(bytes <= 1024) {
+        return 100;
+    } else if (bytes < 1 * TO_MB) {
+        return 1 * TO_KB;
+    } else if (bytes < 1 * TO_GB) {
+        return 1 * TO_MB;
+    } else {
+        return 10 * TO_MB;
+    }
+}
 
 int8_t** eat(size_t total, size_t chunk) {
     unsigned long iterations = total/chunk;

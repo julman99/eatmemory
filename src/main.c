@@ -8,6 +8,7 @@
 #define VERSION "0.1.10"
 #define _POSIX_C_SOURCE 1
 #define STR_NA "N/A"
+#define STR_CHUNK_AUTO "auto"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -28,7 +29,7 @@ ArgParser* configure_cmd() {
     ArgParser* parser = ap_new_parser();
     ap_add_flag(parser, "help h ?");
     ap_add_int_opt(parser, "timeout t", -1);
-    ap_add_str_opt(parser, "chunk-size s", "1K");
+    ap_add_str_opt(parser, "chunk-size s", STR_CHUNK_AUTO);
     return parser;
 }
 
@@ -45,7 +46,7 @@ void print_help() {
     printf("-t <seconds>     Exit after specified number of seconds.\n");
     printf("-s <chunk_size>  Specify a custom chunk size in the same format\n");
     printf("                 as the memory to be eaten.\n");
-    printf("                 Default: 1024 bytes\n");
+    printf("                 Default: %s\n", STR_CHUNK_AUTO);
     printf("                 Max:     %s\n", bytes_to_string(SIZE_MAX, tmpstr));
     printf("\n");
 }
@@ -81,7 +82,7 @@ int main(int argc, char *argv[]){
     print_and_exit_if_error(err,"Memory to eat is invalid", EM_ERROR_MEMORY_ARG_INVALID);
 
     char * chunk_str = ap_get_str_value(parser, "chunk-size");
-    long chunk = string_to_bytes(chunk_str, &err);
+    long chunk = strcmp(chunk_str, STR_CHUNK_AUTO) != 0 ? string_to_bytes(chunk_str, &err) : get_auto_chunk_size(size);
     print_and_exit_if_error(err, "Chunk size is invalid", EM_ERROR_CHUNK_SIZE_ARG_INVALID);
 
     ap_free(parser);
