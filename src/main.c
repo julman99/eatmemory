@@ -50,9 +50,15 @@ void print_help() {
     printf("\n");
 }
 
-void print_error(char * error, int exit_code) {
-    printf("ERROR: %s\n", error);
+void print_and_exit(char * error, eatmemory_error exit_code) {
+    printf("ERROR %d: %s\n", exit_code, error);
     exit(exit_code);
+}
+
+void print_and_exit_if_error(eatmemory_error if_error, char * error_message, eatmemory_error exit_code) {
+    if(if_error != EM_ERROR_NONE) {
+        print_and_exit(error_message, exit_code);
+    }
 }
 
 int main(int argc, char *argv[]){
@@ -68,15 +74,15 @@ int main(int argc, char *argv[]){
     }
 
     int timeout = ap_get_int_value(parser, "timeout");
+
     char* memory_to_eat = ap_get_args(parser)[0];
-    
-    long size = string_to_bytes(memory_to_eat);
+    eatmemory_error err = 0;
+    long size = string_to_bytes(memory_to_eat, &err);
+    print_and_exit_if_error(err,"Memory to eat is invalid", EM_ERROR_MEMORY_ARG_INVALID);
+
     char * chunk_str = ap_get_str_value(parser, "chunk-size");
-    long chunk = string_to_bytes(chunk_str);
-    
-    if(size < 0 ) {
-        print_error("Memory to eat is invalid", ERROR_MEMORY_ARG_INVALID);
-    }
+    long chunk = string_to_bytes(chunk_str, &err);
+    print_and_exit_if_error(err, "Chunk size is invalid", EM_ERROR_CHUNK_SIZE_ARG_INVALID);
 
     ap_free(parser);
 
@@ -101,7 +107,7 @@ int main(int argc, char *argv[]){
             }
         }
     }else{
-        print_error("Could not allocate the memory", ERROR_CANNOT_ALLOCATE_MEMORY);
+        print_and_exit("Could not allocate the memory", EM_ERROR_CANNOT_ALLOCATE_MEMORY);
     }
     digest(eaten, size, chunk);
 }

@@ -1,6 +1,10 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include "errors.h"
+
+#ifndef eatmemory_h
+#define eatmemory_h
 
 #ifdef __APPLE__
     #define SYSMEM_MODE_APPLE
@@ -20,9 +24,10 @@ struct system_memory_stats {
 void get_system_memory_stats(struct system_memory_stats* stats);
 
 //mem string parsing
-size_t string_to_bytes(char * str);
+size_t string_to_bytes(char * str, eatmemory_error * error);
 char * bytes_to_string(size_t bytes, char * str);
 
 //mem allocation
 int8_t** eat(size_t total, size_t chunk);
 void digest(int8_t** eaten, size_t total, size_t chunk);
+#endif

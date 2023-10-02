@@ -1,4 +1,5 @@
 #include "eatmemory.h"
+#include "errors.h"
 #include <string.h>
 #include <ctype.h>
 #include <math.h>
@@ -11,19 +12,31 @@ const int TO_KB = 1024;
 const int TO_MB = 1024 * TO_KB;
 const int TO_GB = 1024 * TO_MB;
 
-size_t string_to_bytes(char * str) {
+size_t string_to_bytes(char * str, eatmemory_error* error) {
     const size_t len = strlen(str);
     char unit = str[len - 1];
-    char value_numeric[MAX_VALUE_STR_SIZE] = "";
-    
-    strncpy(value_numeric, str, MAX_VALUE_STR_SIZE);
+    char value_numeric[MAX_VALUE_STR_SIZE];
 
-    struct system_memory_stats memory_stats;
-    get_system_memory_stats(&memory_stats);
+    strncpy(value_numeric, str, MAX_VALUE_STR_SIZE);
+    if(!isdigit(unit)) {
+        value_numeric[len - 1] = '\0';
+    }
+
+    //parse bytes into numeric variable
     size_t bytes;
     if(sscanf(value_numeric, "%zu", &bytes) == 0) {
+        *error = EM_ERROR_PARSE_SYNTAX;
         return 0;
     }
+
+    //ensure parsed value can be converted to the original string
+    char value_numeric_again[MAX_VALUE_STR_SIZE] = "";
+    sprintf(value_numeric_again, "%zu", bytes);
+    if(strcmp(value_numeric, value_numeric_again) != 0) {
+        *error = EM_ERROR_PARSE_OVERFLOW;
+        return 0;
+    }
+
     if(!isdigit(unit) ) {
         unit = toupper(unit);
         if(unit == 'K') {
@@ -33,10 +46,13 @@ size_t string_to_bytes(char * str) {
         } else if(unit=='G') {
             bytes = bytes * TO_GB;
         } else if (unit=='%') {
+            struct system_memory_stats memory_stats;
+            get_system_memory_stats(&memory_stats);
             bytes = bytes * memory_stats.free / 100;
         }
     }
-    
+
+    *error = EM_ERROR_NONE;
     return bytes;
 }
 
