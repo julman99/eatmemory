@@ -75,6 +75,7 @@ void digest(short** eaten, long total,int chunk) {
     for(i=0;i<total;i+=chunk){
         free(eaten[i/chunk]);
     }
+    free(eaten);
 }
 
 int main(int argc, char *argv[]){
@@ -96,7 +97,8 @@ int main(int argc, char *argv[]){
     }
 
     int timeout = ap_get_int_value(parser, "timeout");
-    char* memory_to_eat = ap_get_args(parser)[0];
+    char** memory_to_eat_holder = ap_get_args(parser);
+    char* memory_to_eat = memory_to_eat_holder[0];
 
     ap_free(parser);
 
@@ -121,6 +123,7 @@ int main(int argc, char *argv[]){
     }else{
         size=atoi(memory_to_eat);
     }
+    free(memory_to_eat_holder);
     if(size <=0 ) {
         printf("ERROR: Size must be a positive integer");
         exit(1);
