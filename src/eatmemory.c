@@ -99,9 +99,11 @@ int8_t** eat(size_t total, size_t chunk) {
     if(total % chunk > 0) {
         iterations++;
     }
+    //Allocate an array to store all the chunks
     int8_t** allocations = malloc(sizeof(int8_t *) * iterations);
     memset(allocations, 0, sizeof(int8_t *) * iterations);
 
+    //now lets actually allocate each chunk in a way that ensures the memory is written an used
     size_t allocated = 0;
     for(unsigned long i=0; i<iterations; i++){
         size_t allocate = MIN(chunk, total - allocated);
