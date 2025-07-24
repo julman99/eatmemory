@@ -1109,18 +1109,24 @@ static void ap_handle_equals_opt(ArgParser* parser, const char* prefix, const ch
     bool found = map_get(parser->option_map, name, (void**)&option);
 
     if (!found) {
+        char error_msg[256];
+        snprintf(error_msg, sizeof(error_msg), "%.10s%.50s is not a recognised option name", prefix, name);
         free(array);
-        exit_with_error("%s%s is not a recognised option name", prefix, name);
+        exit_with_error("%s", error_msg);
     }
 
     if (option->type == OPT_FLAG) {
+        char error_msg[256];
+        snprintf(error_msg, sizeof(error_msg), "flag %.10s%.50s does not accept an argument", prefix, name);
         free(array);
-        exit_with_error("flag %s%s does not accept an argument", prefix, name);
+        exit_with_error("%s", error_msg);
     }
 
     if (strlen(value) == 0) {
+        char error_msg[256];
+        snprintf(error_msg, sizeof(error_msg), "missing argument for %.10s%.50s", prefix, name);
         free(array);
-        exit_with_error("missing argument for %s%s", prefix, name);
+        exit_with_error("%s", error_msg);
     }
 
     if (!option_try_set(option, value)) {
