@@ -42,5 +42,3 @@ windows-shared-x86
 windows-shared-x64
 windows-shared-x64-posix
 windows-arm64
-bare-armv7
-emhf-nano_newlib
