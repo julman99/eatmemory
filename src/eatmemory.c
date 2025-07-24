@@ -48,7 +48,15 @@ size_t string_to_bytes(char * str, eatmemory_error* error) {
         } else if (unit=='%') {
             struct system_memory_stats memory_stats;
             get_system_memory_stats(&memory_stats);
-            bytes = bytes * memory_stats.free / 100;
+            if(memory_stats.supported) {
+                bytes = bytes * memory_stats.free / 100;
+            } else {
+                *error = EM_ERROR_PARSE_INVALID_UNIT;
+                return 0;
+            }
+        } else {
+            *error = EM_ERROR_PARSE_INVALID_UNIT;
+            return 0;
         }
     }
 

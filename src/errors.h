@@ -7,7 +7,8 @@ enum eatmemory_error {
     EM_ERROR_CHUNK_SIZE_ARG_INVALID = 11,
     EM_ERROR_CANNOT_ALLOCATE_MEMORY = 20,
     EM_ERROR_PARSE_SYNTAX = 30,
-    EM_ERROR_PARSE_OVERFLOW = 31
+    EM_ERROR_PARSE_OVERFLOW = 31,
+    EM_ERROR_PARSE_INVALID_UNIT = 32
 };
 
 #define eatmemory_error enum eatmemory_error
