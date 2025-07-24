@@ -109,6 +109,7 @@ int8_t** eat(size_t total, size_t chunk) {
         size_t allocate = MIN(chunk, total - allocated);
         int8_t *buffer = malloc(sizeof(int8_t) * allocate);
         if(buffer == NULL){
+            digest(allocations, total, chunk);
             return NULL;
         }
         for(unsigned long j=0; j<sizeof(int8_t) * allocate; j++) {
