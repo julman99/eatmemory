@@ -1,6 +1,6 @@
 CC ?= gcc
 CFLAGS := -Wall -Wextra -std=c99 -O2 -g
-LDFLAGS :=
+LDFLAGS := -lm
 SRC_DIR := src
 INCLUDE_DIR := include
 OUTPUT_DIR := output

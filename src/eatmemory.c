@@ -8,9 +8,9 @@
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
 #define MAX_VALUE_STR_SIZE 255
 
-const int TO_KB = 1024;
-const int TO_MB = 1024 * TO_KB;
-const int TO_GB = 1024 * TO_MB;
+#define TO_KB 1024UL
+#define TO_MB (1024UL * TO_KB)
+#define TO_GB (1024UL * TO_MB)
 
 size_t string_to_bytes(char * str, eatmemory_error* error) {
     const size_t len = strlen(str);
