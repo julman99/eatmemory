@@ -48,7 +48,14 @@ jobs:
           make
           bash
     
-    # Run the test
-    - name: Run simple test
+    # Run the test on Unix systems
+    - name: Run simple test (Unix)
+      if: runner.os != 'Windows'
+      run: bash test/simple.test.sh
+    
+    # Run the test on Windows with MSYS2 environment
+    - name: Run simple test (Windows)
+      if: runner.os == 'Windows'
+      shell: msys2 {0}
       run: bash test/simple.test.sh
    
