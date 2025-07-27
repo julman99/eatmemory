@@ -1,0 +1,41 @@
+name: Dockercross Cross-Compilation Tests
+
+on:
+  push:
+    branches: [ main, master, v* ]
+  pull_request:
+    branches: [ main, master, v* ]
+
+jobs:
+  dockcross-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        target: [
+          android-arm, android-arm64, android-x86, android-x86_64,
+          linux-i686, linux-x64, linux-x64-clang, linux-arm64,
+          linux-arm64-musl, linux-arm64-full, linux-armv5, linux-armv5-musl,
+          linux-armv5-uclibc, linux-m68k-uclibc, linux-s390x, linux-x64-tinycc,
+          linux-armv6, linux-armv6-lts, linux-armv6-musl, linux-arm64-lts,
+          linux-mipsel-lts, linux-armv7l-musl, linux-armv7, linux-armv7a,
+          linux-armv7-lts, linux-armv7a-lts, linux-x86_64-full, linux-mips,
+          linux-mips-uclibc, linux-mips-lts, linux-ppc64le, linux-ppc64le-lts,
+          linux-riscv64, linux-riscv32, linux-xtensa-uclibc, web-wasi,
+          windows-static-x86, windows-static-x64, windows-static-x64-posix,
+          windows-armv7, windows-shared-x86, windows-shared-x64,
+          windows-shared-x64-posix, windows-arm64
+        ]
+      fail-fast: false
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Test ${{ matrix.target }}
+      run: |
+        echo "Testing dockercross target: ${{ matrix.target }}"
+        docker run -i --rm -v "$PWD:/src" dockcross/${{ matrix.target }} bash -c 'cd /src && make clean && make' 

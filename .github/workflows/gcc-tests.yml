@@ -1,0 +1,29 @@
+name: GCC Version Tests
+
+on:
+  push:
+    branches: [ main, master, v* ]
+  pull_request:
+    branches: [ main, master, v* ]
+
+jobs:
+  gcc-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      matrix:
+        gcc_version: [4, 5, 8, 9, 10, 11, 12, 13]
+        platform: [linux/amd64, linux/arm64]
+      fail-fast: false
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Test GCC ${{ matrix.gcc_version }} on ${{ matrix.platform }}
+      run: |
+        echo "Testing GCC ${{ matrix.gcc_version }} on ${{ matrix.platform }}"
+        docker run -i -v "$PWD:/src" --rm --platform ${{ matrix.platform }} gcc:${{ matrix.gcc_version }} bash -c "cd /src && make clean && make && output/eatmemory 100M -t 0" 

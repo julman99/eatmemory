@@ -1,4 +1,4 @@
-name: Simple Test CI
+name: Simple Run Test
 
 on:
   push:
@@ -7,8 +7,7 @@ on:
     branches: [ main, master, v* ]
 
 jobs:
-  # Simple multi-platform test
-  simple-test:
+  simple-run-test:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
@@ -31,8 +30,6 @@ jobs:
     - name: Install dependencies (macOS)
       if: runner.os == 'macOS'
       run: |
-        # Xcode command line tools should already be available
-        # Just verify gcc and make are available
         which gcc || which clang
         which make
     
@@ -58,31 +55,4 @@ jobs:
     - name: Run simple test (Windows)
       if: runner.os == 'Windows'
       shell: msys2 {0}
-      run: bash test/simple.test.sh
-
-  # Comprehensive Docker-based tests (all cross-platform targets)
-  docker-tests:
-    runs-on: ubuntu-latest
-    timeout-minutes: 120  # Docker tests can take a while
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-    
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
-      
-    - name: Enable Docker experimental features
-      run: |
-        set -e
-        echo '{"experimental": true}' | sudo tee /etc/docker/daemon.json
-        sudo systemctl restart docker
-        # Verify Docker is working after restart
-        docker --version
-        docker info > /dev/null
-        
-    - name: Run comprehensive test suite
-      run: |
-        cd test
-        bash all.test.sh
-   
+      run: bash test/simple.test.sh 
