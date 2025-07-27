@@ -94,8 +94,26 @@ int main(int argc, char *argv[]){
     printf("Currently total memory:     %s\n", memory_stats.supported ? bytes_to_string(memory_stats.total, tmpstr) : STR_NA);
     printf("Currently available memory: %s\n", memory_stats.supported ? bytes_to_string(memory_stats.free, tmpstr) : STR_NA);
     printf("\n");
+    
+    // Check if process memory monitoring is supported and warn if not
+    struct process_memory_stats process_test;
+    get_process_memory_stats(&process_test);
+    if (!process_test.supported) {
+        printf("WARNING: Process memory usage monitoring is not supported on this operating system. We won't be able to automatically verify the memory consumption.\n");
+        printf("\n");
+    }
+    
     printf("Eating %s in chunks of %s...\n", bytes_to_string(size, tmpstr), bytes_to_string(chunk, tmpstr2));
-    int8_t** eaten = eat(size, chunk);
+    
+    eatmemory_error eat_error = EM_ERROR_NONE;
+    int8_t** eaten = eat(size, chunk, &eat_error);
+    
+    if(eat_error == EM_ERROR_MEMORY_VERIFICATION_FAILED) {
+        print_and_exit("Memory allocation verification failed - the process did not consume the expected amount of memory", EM_ERROR_MEMORY_VERIFICATION_FAILED);
+    } else if(eat_error == EM_ERROR_CANNOT_ALLOCATE_MEMORY) {
+        print_and_exit("Could not allocate the memory", EM_ERROR_CANNOT_ALLOCATE_MEMORY);
+    }
+    
     if(eaten){
         if(timeout < 0 && isatty(fileno(stdin))) {
             printf("Done, press ENTER to free the memory\n");
@@ -109,8 +127,6 @@ int main(int argc, char *argv[]){
                 sleep(1);
             }
         }
-    }else{
-        print_and_exit("Could not allocate the memory", EM_ERROR_CANNOT_ALLOCATE_MEMORY);
     }
     digest(eaten, size, chunk);
 }

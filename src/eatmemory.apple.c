@@ -1,6 +1,8 @@
 #include "eatmemory.h"
 #ifdef SYSMEM_MODE_APPLE
     #include <mach/mach_host.h>
+    #include <mach/task.h>
+    #include <mach/mach_init.h>
 
     void get_system_memory_stats(struct system_memory_stats* stats) {
 
@@ -25,5 +27,21 @@
 
         natural_t free_memory = vm_stat.free_count + vm_stat.inactive_count;
         stats->free = (size_t)free_memory * (size_t)page_size;
+    }
+
+    void get_process_memory_stats(struct process_memory_stats* stats) {
+        mach_task_basic_info_data_t task_basic_info;
+        mach_msg_type_number_t count = MACH_TASK_BASIC_INFO_COUNT;
+        
+        kern_return_t kr = task_info(mach_task_self(), MACH_TASK_BASIC_INFO,
+                                   (task_info_t)&task_basic_info, &count);
+        
+        if (kr != KERN_SUCCESS) {
+            stats->supported = false;
+            return;
+        }
+        
+        stats->supported = true;
+        stats->rss = task_basic_info.resident_size;
     }
 #endif

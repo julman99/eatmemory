@@ -20,8 +20,17 @@ struct system_memory_stats {
     size_t total;
     size_t free;
 };
+
+struct process_memory_stats {
+    bool supported;
+    size_t rss; // Resident Set Size - actual physical memory used by the process
+};
+
 //system memory stats
 void get_system_memory_stats(struct system_memory_stats* stats);
+
+//process memory stats  
+void get_process_memory_stats(struct process_memory_stats* stats);
 
 //mem string parsing
 size_t string_to_bytes(char * str, eatmemory_error * error);
@@ -29,6 +38,6 @@ char * bytes_to_string(size_t bytes, char * str);
 
 //mem allocation
 size_t get_auto_chunk_size(size_t bytes);
-int8_t** eat(size_t total, size_t chunk);
+int8_t** eat(size_t total, size_t chunk, eatmemory_error* error);
 void digest(int8_t** eaten, size_t total, size_t chunk);
 #endif
