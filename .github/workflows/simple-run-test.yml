@@ -10,7 +10,7 @@ jobs:
   simple-run-test:
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, ubuntu-24.04, ubuntu-22.04, ubuntu-24.04-arm, ubuntu-22.04-arm, macos-latest, windows-latest, windows-11-arm]
       fail-fast: false
     
     runs-on: ${{ matrix.os }}
