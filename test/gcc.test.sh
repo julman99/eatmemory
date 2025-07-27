@@ -14,11 +14,11 @@ function test_gcc_linux {
   local gcc_version="$1";
   local platform="$2";
   echo_test_start "linux gcc:$gcc_version $2"
-  docker run -it -v "$SCRIPT_DIR:/src" --rm --platform $platform gcc:$gcc_version bash -c "cd /src && make clean && make && output/eatmemory -?"
+  docker run -it -v "$SCRIPT_DIR/../:/src" --rm --platform $platform gcc:$gcc_version bash -c "cd /src && make clean && make && output/eatmemory -?"
 }
 
 function test_all_gcc_linux {
-  local platforms="linux/amd64 linux/arm64 linux/amd64v8";
+  local platforms="linux/amd64 linux/arm64";
   local gcc_versions="4 5 8 9 10 11 12 13";
   for platform in $platforms
   do
