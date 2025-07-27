@@ -1,0 +1,54 @@
+name: Simple Test CI
+
+on:
+  push:
+    branches: [ main, master, v* ]
+  pull_request:
+    branches: [ main, master, v* ]
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+      fail-fast: false
+    
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    # Linux setup
+    - name: Install dependencies (Linux)
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential gcc make
+    
+    # macOS setup  
+    - name: Install dependencies (macOS)
+      if: runner.os == 'macOS'
+      run: |
+        # Xcode command line tools should already be available
+        # Just verify gcc and make are available
+        which gcc || which clang
+        which make
+    
+    # Windows setup with MSYS2
+    - name: Setup MSYS2 (Windows)
+      if: runner.os == 'Windows'
+      uses: msys2/setup-msys2@v2
+      with:
+        msystem: UCRT64
+        update: true
+        install: >-
+          mingw-w64-ucrt-x86_64-gcc
+          mingw-w64-ucrt-x86_64-make
+          make
+          bash
+    
+    # Run the test
+    - name: Run simple test
+      run: bash test/simple.test.sh
+   
