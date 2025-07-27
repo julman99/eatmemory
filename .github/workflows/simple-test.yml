@@ -7,7 +7,8 @@ on:
     branches: [ main, master, v* ]
 
 jobs:
-  test:
+  # Simple multi-platform test
+  simple-test:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
@@ -58,4 +59,30 @@ jobs:
       if: runner.os == 'Windows'
       shell: msys2 {0}
       run: bash test/simple.test.sh
+
+  # Comprehensive Docker-based tests (all cross-platform targets)
+  docker-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120  # Docker tests can take a while
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    - name: Enable Docker experimental features
+      run: |
+        set -e
+        echo '{"experimental": true}' | sudo tee /etc/docker/daemon.json
+        sudo systemctl restart docker
+        # Verify Docker is working after restart
+        docker --version
+        docker info > /dev/null
+        
+    - name: Run comprehensive test suite
+      run: |
+        cd test
+        bash all.test.sh
    
