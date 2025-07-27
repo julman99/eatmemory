@@ -141,19 +141,19 @@ int8_t** eat(size_t total, size_t chunk, eatmemory_error* error) {
                 return NULL;
             }
             
-            uint64_t memory_increase = final_memory.rss - initial_memory.rss;
+            size_t memory_increase = final_memory.rss - initial_memory.rss;
             // Allow for some tolerance as there may be additional overhead
             // and other allocations happening in the system
-            uint64_t expected_min, expected_max;
+            size_t expected_min, expected_max;
             
             // Safe calculation of expected_min (80% of total)
-            expected_min = (uint64_t)total * 80 / 100;
+            expected_min = (size_t)total * 80 / 100;
             
             // Safe calculation of expected_max (120% of total) with overflow protection
-            if((uint64_t)total > UINT64_MAX / 120) {
-                expected_max = UINT64_MAX;
+            if(total > SIZE_MAX / 120) {
+                expected_max = SIZE_MAX;
             } else {
-                expected_max = (uint64_t)total * 120 / 100;
+                expected_max = total * 120 / 100;
             }
             
             // Check if memory increase is within expected range
