@@ -37,8 +37,9 @@ while IFS= read -r -d '' test_file; do
         chmod +x "$test_file"
     fi
     
-    # Run the test file safely
-    if bash "$test_file"; then
+    # Source the test file in a subshell to provide terminal access
+    # while keeping tests isolated from each other and the main script
+    if ( source "$test_file" ); then
         echo "✓ PASSED: $test_file"
         ((passed++))
     else

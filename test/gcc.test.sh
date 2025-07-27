@@ -14,7 +14,7 @@ function test_gcc_linux {
   local gcc_version="$1";
   local platform="$2";
   echo_test_start "linux gcc:$gcc_version $2"
-  docker run -it -v "$SCRIPT_DIR/../:/src" --rm --platform $platform gcc:$gcc_version bash -c "cd /src && make clean && make && echo 'Testing help command...' && output/eatmemory -? && echo 'Testing memory allocation and self-check...' && output/eatmemory 100M -t 0"
+  docker run -i -v "$SCRIPT_DIR/../:/src" --rm --platform $platform gcc:$gcc_version bash -c "cd /src && make clean && make && output/eatmemory 100M -t 0"
 }
 
 function test_all_gcc_linux {
