@@ -50,7 +50,7 @@ size_t string_to_bytes(char * str, eatmemory_error* error) {
             struct system_memory_stats memory_stats;
             get_system_memory_stats(&memory_stats);
             if(memory_stats.supported) {
-                bytes = bytes * memory_stats.free / 100;
+                bytes = memory_stats.free * bytes / 100;
             } else {
                 *error = EM_ERROR_PARSE_INVALID_UNIT;
                 return 0;
@@ -141,23 +141,19 @@ int8_t** eat(size_t total, size_t chunk, eatmemory_error* error) {
                 return NULL;
             }
             
-            size_t memory_increase = final_memory.rss - initial_memory.rss;
+            uint64_t memory_increase = final_memory.rss - initial_memory.rss;
             // Allow for some tolerance as there may be additional overhead
             // and other allocations happening in the system
-            size_t expected_min, expected_max;
+            uint64_t expected_min, expected_max;
             
-            // Safe calculation of expected_min (80% of total) with overflow protection
-            if(total > SIZE_MAX / 80) {
-                expected_min = SIZE_MAX; // If overflow would occur, use max value
-            } else {
-                expected_min = total * 80 / 100;
-            }
+            // Safe calculation of expected_min (80% of total)
+            expected_min = (uint64_t)total * 80 / 100;
             
-            // Safe calculation of expected_max (120% of total) with overflow protection  
-            if(total > SIZE_MAX / 120) {
-                expected_max = SIZE_MAX; // If overflow would occur, use max value
+            // Safe calculation of expected_max (120% of total) with overflow protection
+            if((uint64_t)total > UINT64_MAX / 120) {
+                expected_max = UINT64_MAX;
             } else {
-                expected_max = total * 120 / 100;
+                expected_max = (uint64_t)total * 120 / 100;
             }
             
             // Check if memory increase is within expected range

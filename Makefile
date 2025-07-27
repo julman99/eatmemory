@@ -1,12 +1,22 @@
 CC ?= gcc
 CFLAGS := -Wall -Wextra -std=c99 -O2 -g
 LDFLAGS := -lm
+
+# Add Windows-specific libraries when cross-compiling for Windows
+ifneq ($(findstring mingw,$(CC)),)
+    LDFLAGS += -lpsapi
+    EXE_SUFFIX := .exe
+else
+    EXE_SUFFIX :=
+endif
+
 SRC_DIR := src
 INCLUDE_DIR := include
 OUTPUT_DIR := output
 SRC := $(wildcard $(SRC_DIR)/*.c)
 OBJ := $(patsubst $(SRC_DIR)/%.c,$(OUTPUT_DIR)/%.o,$(SRC))
-EXE := $(OUTPUT_DIR)/eatmemory
+EXE := $(OUTPUT_DIR)/eatmemory$(EXE_SUFFIX)
+
 PREFIX := /usr/local
 INSTALL_DIR := $(PREFIX)/bin
 

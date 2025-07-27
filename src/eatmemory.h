@@ -8,6 +8,8 @@
 
 #ifdef __APPLE__
     #define SYSMEM_MODE_APPLE
+#elif defined(_WIN32) || defined(_WIN64)
+    #define SYSMEM_MODE_WINDOWS
 #elif defined(_SC_PHYS_PAGES) && defined(_SC_AVPHYS_PAGES) && defined(_SC_PAGE_SIZE)
     #define SYSMEM_MODE_LINUX
 #else
