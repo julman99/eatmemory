@@ -127,8 +127,13 @@ int8_t** eat(size_t total, size_t chunk, eatmemory_error* error) {
         allocated += allocate;
     }
     
-    // Verify memory consumption if supported
-    if(initial_memory.supported) {
+    // Verify memory consumption if supported and allocation is large enough
+    // For small allocations, OS memory measurement is too imprecise due to:
+    // - Page granularity (typically 4KB pages)
+    // - Malloc overhead and metadata
+    // - Memory alignment requirements
+    // - System noise from other processes
+    if(initial_memory.supported && total >= MIN_VERIFICATION_THRESHOLD_BYTES) {
         struct process_memory_stats final_memory;
         get_process_memory_stats(&final_memory);
         

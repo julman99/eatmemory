@@ -103,6 +103,12 @@ int main(int argc, char *argv[]){
         printf("\n");
     }
     
+    // Warn if allocation is too small for reliable memory verification
+    if (process_test.supported && (unsigned long)size < MIN_VERIFICATION_THRESHOLD_BYTES) {
+        printf("WARNING: Memory allocation verification is disabled for allocations smaller than %luKB due to OS memory measurement precision limitations.\n", MIN_VERIFICATION_THRESHOLD_BYTES / TO_KB);
+        printf("\n");
+    }
+    
     printf("Eating %s in chunks of %s...\n", bytes_to_string(size, tmpstr), bytes_to_string(chunk, tmpstr2));
     
     eatmemory_error eat_error = EM_ERROR_NONE;

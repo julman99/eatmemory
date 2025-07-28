@@ -6,6 +6,14 @@
 #ifndef eatmemory_h
 #define eatmemory_h
 
+#define TO_KB 1024UL
+#define TO_MB (1024UL * TO_KB)
+#define TO_GB (1024UL * TO_MB)
+
+// Minimum allocation size for memory verification - below this threshold, 
+// OS memory measurement is too imprecise due to page granularity and malloc overhead
+#define MIN_VERIFICATION_THRESHOLD_BYTES 1UL * TO_MB  // 64 KB in bytes
+
 #ifdef __APPLE__
     #define SYSMEM_MODE_APPLE
 #elif defined(_WIN32) || defined(_WIN64)
