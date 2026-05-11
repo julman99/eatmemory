@@ -21,9 +21,6 @@
 #include <unistd.h>
 #include "errors.h"
 
-char tmpstr[255] = "";
-char tmpstr2[255] = "";
-
 ArgParser* configure_cmd() {
     ArgParser* parser = ap_new_parser();
     ap_add_flag(parser, "help h ?");
@@ -48,7 +45,7 @@ void print_help() {
     printf("-s <chunk_size>  Specify a custom chunk size in the same format\n");
     printf("                 as the memory to be eaten.\n");
     printf("                 Default: %s\n", STR_CHUNK_AUTO);
-    printf("                 Max:     %s\n", bytes_to_string(SIZE_MAX, tmpstr));
+    printf("                 Max:     %s\n", bytes_to_string(SIZE_MAX, BYTES_TMP_STR()));
     printf("\n");
 }
 
@@ -90,8 +87,8 @@ int main(int argc, char *argv[]){
 
     struct system_memory_stats memory_stats;
     get_system_memory_stats(&memory_stats);
-    printf("Currently total memory:     %s\n", memory_stats.supported ? bytes_to_string(memory_stats.total, tmpstr) : STR_NA);
-    printf("Currently available memory: %s\n", memory_stats.supported ? bytes_to_string(memory_stats.free, tmpstr) : STR_NA);
+    printf("Currently total memory:     %s\n", memory_stats.supported ? bytes_to_string(memory_stats.total, BYTES_TMP_STR()) : STR_NA);
+    printf("Currently available memory: %s\n", memory_stats.supported ? bytes_to_string(memory_stats.free, BYTES_TMP_STR()) : STR_NA);
     printf("\n");
     
     // Check if process memory monitoring is supported and warn if not
@@ -108,7 +105,7 @@ int main(int argc, char *argv[]){
         printf("\n");
     }
     
-    printf("Eating %s in chunks of %s...\n", bytes_to_string(size, tmpstr), bytes_to_string(chunk, tmpstr2));
+    printf("Eating %s in chunks of %s...\n", bytes_to_string(size, BYTES_TMP_STR()), bytes_to_string(chunk, BYTES_TMP_STR()));
     
     eatmemory_error eat_error = EM_ERROR_NONE;
     struct allocation eaten = eat(size, chunk, &eat_error);

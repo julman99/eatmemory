@@ -46,6 +46,11 @@ void get_process_memory_stats(struct process_memory_stats* stats);
 size_t string_to_bytes(char * str, eatmemory_error * error);
 char * bytes_to_string(size_t bytes, char * str);
 
+// Produces a fresh anonymous stack buffer sized for any bytes_to_string output.
+// Each expansion yields a distinct buffer, so the macro is safe to use multiple
+// times in the same expression (e.g., two arguments to one printf call).
+#define BYTES_TMP_STR() ((char[64]){0})
+
 //mem allocation
 struct allocation {
     uint8_t** chunks;
