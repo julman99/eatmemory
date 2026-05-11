@@ -112,15 +112,15 @@ int main(int argc, char *argv[]){
     printf("Eating %s in chunks of %s...\n", bytes_to_string(size, tmpstr), bytes_to_string(chunk, tmpstr2));
     
     eatmemory_error eat_error = EM_ERROR_NONE;
-    int8_t** eaten = eat(size, chunk, &eat_error);
-    
+    struct allocation eaten = eat(size, chunk, &eat_error);
+
     if(eat_error == EM_ERROR_MEMORY_VERIFICATION_FAILED) {
         print_and_exit("Memory allocation verification failed - the process did not consume the expected amount of memory", EM_ERROR_MEMORY_VERIFICATION_FAILED);
     } else if(eat_error == EM_ERROR_CANNOT_ALLOCATE_MEMORY) {
         print_and_exit("Could not allocate the memory", EM_ERROR_CANNOT_ALLOCATE_MEMORY);
     }
-    
-    if(eaten){
+
+    if(eaten.chunks){
         if(timeout < 0 && isatty(fileno(stdin))) {
             printf("Done, press ENTER to free the memory\n");
             getchar();
@@ -134,6 +134,6 @@ int main(int argc, char *argv[]){
             }
         }
     }
-    digest(eaten, size, chunk);
+    digest(eaten);
 }
 

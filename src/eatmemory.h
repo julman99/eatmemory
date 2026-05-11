@@ -47,7 +47,12 @@ size_t string_to_bytes(char * str, eatmemory_error * error);
 char * bytes_to_string(size_t bytes, char * str);
 
 //mem allocation
+struct allocation {
+    uint8_t** chunks;
+    size_t count;
+};
+
 size_t get_auto_chunk_size(size_t bytes);
-int8_t** eat(size_t total, size_t chunk, eatmemory_error* error);
-void digest(int8_t** eaten, size_t total, size_t chunk);
+struct allocation eat(size_t total, size_t chunk, eatmemory_error* error);
+void digest(struct allocation alloc);
 #endif

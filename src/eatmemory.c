@@ -95,46 +95,54 @@ size_t get_auto_chunk_size(size_t bytes) {
     }
 }
 
-int8_t** eat(size_t total, size_t chunk, eatmemory_error* error) {
+struct allocation eat(size_t total, size_t chunk, eatmemory_error* error) {
+    struct allocation result = { NULL, 0 };
     *error = EM_ERROR_NONE;
-    
+
     // Get initial memory usage for verification
     struct process_memory_stats initial_memory;
     get_process_memory_stats(&initial_memory);
-    
+
     size_t iterations = total/chunk;
     if(total % chunk > 0) {
         iterations++;
     }
     //Allocate an array to store all the chunks
-    if(iterations > SIZE_MAX / sizeof(int8_t *)) {
+    if(iterations > SIZE_MAX / sizeof(uint8_t *)) {
         *error = EM_ERROR_CANNOT_ALLOCATE_MEMORY;
-        return NULL;
+        return result;
     }
-    int8_t** allocations = malloc(sizeof(int8_t *) * iterations);
+    uint8_t** allocations = malloc(sizeof(uint8_t *) * iterations);
     if(allocations == NULL) {
         *error = EM_ERROR_CANNOT_ALLOCATE_MEMORY;
-        return NULL;
+        return result;
     }
-    memset(allocations, 0, sizeof(int8_t *) * iterations);
+    memset(allocations, 0, sizeof(uint8_t *) * iterations);
+
+    // The chunk count is captured in the allocation handle so that digest()
+    // cannot disagree with eat() about how many entries to free.
+    result.chunks = allocations;
+    result.count = iterations;
 
     //now lets actually allocate each chunk in a way that ensures the memory is written an used
     size_t allocated = 0;
     for(size_t i=0; i<iterations; i++){
         size_t allocate = MIN(chunk, total - allocated);
-        int8_t *buffer = malloc(sizeof(int8_t) * allocate);
+        uint8_t *buffer = malloc(sizeof(uint8_t) * allocate);
         if(buffer == NULL){
-            digest(allocations, total, chunk);
+            digest(result);
             *error = EM_ERROR_CANNOT_ALLOCATE_MEMORY;
-            return NULL;
+            result.chunks = NULL;
+            result.count = 0;
+            return result;
         }
-        for(size_t j=0; j<sizeof(int8_t) * allocate; j++) {
+        for(size_t j=0; j<sizeof(uint8_t) * allocate; j++) {
             buffer[j] = 1;
         }
         allocations[i] = buffer;
         allocated += allocate;
     }
-    
+
     // Verify memory consumption if supported and allocation is large enough
     // For small allocations, OS memory measurement is too imprecise due to:
     // - Page granularity (typically 4KB pages)
@@ -144,52 +152,55 @@ int8_t** eat(size_t total, size_t chunk, eatmemory_error* error) {
     if(initial_memory.supported && total >= MIN_VERIFICATION_THRESHOLD_BYTES) {
         struct process_memory_stats final_memory;
         get_process_memory_stats(&final_memory);
-        
+
         if(final_memory.supported) {
             // Handle potential underflow if final memory is less than initial
             if(final_memory.rss < initial_memory.rss) {
                 // Memory decreased or measurement inconsistency - this is unexpected
-                digest(allocations, total, chunk);
+                digest(result);
                 *error = EM_ERROR_MEMORY_VERIFICATION_FAILED;
-                return NULL;
+                result.chunks = NULL;
+                result.count = 0;
+                return result;
             }
-            
+
             size_t memory_increase = final_memory.rss - initial_memory.rss;
             // Allow for some tolerance as there may be additional overhead
             // and other allocations happening in the system
             size_t expected_min, expected_max;
-            
+
             // Safe calculation of expected_min (80% of total)
             expected_min = (size_t)total * 80 / 100;
-            
+
             // Safe calculation of expected_max (120% of total) with overflow protection
             if(total > SIZE_MAX / 120) {
                 expected_max = SIZE_MAX;
             } else {
                 expected_max = total * 120 / 100;
             }
-            
+
             // Check if memory increase is within expected range
             if(memory_increase < expected_min || memory_increase > expected_max) {
-                digest(allocations, total, chunk);
+                digest(result);
                 *error = EM_ERROR_MEMORY_VERIFICATION_FAILED;
-                return NULL;
+                result.chunks = NULL;
+                result.count = 0;
+                return result;
             }
         }
     }
-    
-    return allocations;
+
+    return result;
 }
 
-void digest(int8_t** eaten, size_t total, size_t chunk) {
-    size_t iterations = total/chunk;
-    if(total % chunk > 0) {
-        iterations++;
+void digest(struct allocation alloc) {
+    if(alloc.chunks == NULL) {
+        return;
     }
-    for(size_t i=0; i < iterations; i++){
-        if(eaten[i] != NULL) {
-            free(eaten[i]);
+    for(size_t i=0; i < alloc.count; i++){
+        if(alloc.chunks[i] != NULL) {
+            free(alloc.chunks[i]);
         }
     }
-    free(eaten);
+    free(alloc.chunks);
 }
