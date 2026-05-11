@@ -49,7 +49,7 @@ void print_help() {
 }
 
 void print_and_exit(char * error, eatmemory_error exit_code) {
-    printf("ERROR %d: %s\n", exit_code, error);
+    fprintf(stderr, "ERROR %d: %s\n", exit_code, error);
     exit(exit_code);
 }
 
