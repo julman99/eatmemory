@@ -109,6 +109,12 @@ run_failing_test "7" "Overflow in G-unit scaling" "99999999999999999G" 10
 # Linux, SIGBUS on Darwin); must now be rejected cleanly.
 run_failing_test "8" "Chunk size of zero" "100M -s 0" 11
 
+# Bare unit suffix: stripping the unit leaves an empty numeric portion;
+# sscanf returns EOF and would leave `bytes` uninitialized. The strict
+# `== 0` check used to miss this; the fix uses `!= 1` instead.
+run_failing_test "9" "Bare unit suffix 'M'" "M" 10
+run_failing_test "10" "Bare percent suffix" '"%"' 10
+
 echo ""
 echo "=================================================================================================="
 echo "✓ All tests completed successfully"

@@ -35,7 +35,12 @@ size_t string_to_bytes(char * str, eatmemory_error* error) {
 
     //parse bytes into numeric variable
     size_t bytes;
-    if(sscanf(value_numeric, "%zu", &bytes) == 0) {
+    // Compare against 1, not 0: sscanf returns 0 when matching fails before
+    // any conversion, but EOF (-1) when the input is empty. The latter
+    // happens after stripping a bare unit suffix (e.g., "M" -> ""), and
+    // the strict == 0 check missed it -- letting an uninitialized `bytes`
+    // through to the next line.
+    if(sscanf(value_numeric, "%zu", &bytes) != 1) {
         *error = EM_ERROR_PARSE_SYNTAX;
         return 0;
     }
