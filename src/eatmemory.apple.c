@@ -8,7 +8,10 @@
         mach_port_t host_port = mach_host_self();
         mach_msg_type_number_t count;
 
-        host_page_size(host_port, &page_size);
+        if (host_page_size(host_port, &page_size) != KERN_SUCCESS) {
+            stats->supported = false;
+            return;
+        }
         vm_statistics_data_t vm_stat;
 
         count = sizeof(vm_stat) / sizeof(natural_t);
