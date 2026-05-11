@@ -1,20 +1,22 @@
 #!/bin/bash
 
-# simple.test.sh - Simple test that compiles and runs eatmemory with edge cases around MIN_VERIFICATION_THRESHOLD_BYTES
-# Tests memory allocations below, at, and above the 1MB verification threshold
+# simple.test.sh - Compiles eatmemory and exercises allocations spanning the
+# 1 MB boundary that drives both get_auto_chunk_size() (1 KB chunks below,
+# 1 MB chunks at or above) and bytes_to_string() (K vs M formatting), plus
+# negative tests covering the parse and chunk-size error paths.
 
 set -e  # Exit on any error
 
-# Constants for edge case testing around MIN_VERIFICATION_THRESHOLD_BYTES
-readonly THRESHOLD_BYTES=1048576                           # 1MB in bytes
-readonly THRESHOLD_KB=$((THRESHOLD_BYTES / 1024))          # 1024KB  
-readonly THRESHOLD_MINUS_1_KB=$((THRESHOLD_KB - 1))        # 1023KB
-readonly THRESHOLD_MINUS_1_BYTES=$((THRESHOLD_BYTES - 1))  # 1048575 bytes
-readonly THRESHOLD_PLUS_1_BYTES=$((THRESHOLD_BYTES + 1))   # 1048577 bytes
-readonly LARGE_TEST_SIZE="100M"                            # Well above threshold
+# Sizes straddling the 1 MB unit boundary.
+readonly ONE_MB_BYTES=1048576                           # 1 MB in bytes
+readonly ONE_MB_KB=$((ONE_MB_BYTES / 1024))             # 1024
+readonly UNDER_1MB_KB=$((ONE_MB_KB - 1))                # 1023
+readonly UNDER_1MB_BYTES=$((ONE_MB_BYTES - 1))          # 1048575
+readonly OVER_1MB_BYTES=$((ONE_MB_BYTES + 1))           # 1048577
+readonly LARGE_TEST_SIZE="100M"                         # Comfortably above 1 MB
 
-echo "Enhanced eatmemory test - Testing edge cases around MIN_VERIFICATION_THRESHOLD_BYTES (${THRESHOLD_KB}KB)"
-echo "========================================================================================="
+echo "eatmemory sanity tests - 1 MB boundary coverage plus error paths"
+echo "================================================================="
 
 # Get the script directory and navigate to project root
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -76,15 +78,16 @@ run_failing_test() {
 }
 
 echo ""
-echo "Testing edge cases around MIN_VERIFICATION_THRESHOLD_BYTES (${THRESHOLD_KB}KB = ${THRESHOLD_BYTES} bytes):"
+echo "Allocations around the 1 MB boundary (${ONE_MB_KB} KB = ${ONE_MB_BYTES} bytes):"
 echo "=================================================================================================="
 
-# Test cases around the verification threshold
-run_test "1" "Below threshold (${THRESHOLD_MINUS_1_KB}KB)" "${THRESHOLD_MINUS_1_KB}K -t 0" "Memory verification should be disabled"
-run_test "2" "Just below threshold (${THRESHOLD_MINUS_1_BYTES} bytes)" "${THRESHOLD_MINUS_1_BYTES} -t 0" "Memory verification should be disabled"
-run_test "3" "Exactly at threshold (${THRESHOLD_KB}KB)" "${THRESHOLD_KB}K -t 0" "Memory verification should be enabled"
-run_test "4" "Just above threshold (${THRESHOLD_PLUS_1_BYTES} bytes)" "${THRESHOLD_PLUS_1_BYTES} -t 0" "Memory verification should be enabled"
-run_test "5" "Well above threshold (${LARGE_TEST_SIZE})" "${LARGE_TEST_SIZE} -t 0" "Memory verification should be enabled"
+# Each test allocates a different size and asserts the binary exits 0,
+# implicitly checking that the per-byte readback verification passes.
+run_test "1" "Just under 1 MB (${UNDER_1MB_KB} KB)"     "${UNDER_1MB_KB}K -t 0"    "auto chunk size = 1 KB"
+run_test "2" "1 byte under 1 MB (${UNDER_1MB_BYTES} bytes)" "${UNDER_1MB_BYTES} -t 0" "auto chunk size = 1 KB"
+run_test "3" "Exactly 1 MB (${ONE_MB_KB} KB)"           "${ONE_MB_KB}K -t 0"       "auto chunk size transitions to 1 MB"
+run_test "4" "1 byte over 1 MB (${OVER_1MB_BYTES} bytes)"   "${OVER_1MB_BYTES} -t 0"   "auto chunk size = 1 MB, last chunk smaller"
+run_test "5" "Well above 1 MB (${LARGE_TEST_SIZE})"     "${LARGE_TEST_SIZE} -t 0"  "auto chunk size = 1 MB, many chunks"
 
 echo ""
 echo "Error-path regression tests:"
