@@ -9,7 +9,12 @@ CC ?= gcc
 # Override with `make VERSION=1.2.3` if you need to bake in a specific value.
 VERSION ?= $(shell (git describe --tags --match 'v*' --always --dirty --abbrev=8 2>/dev/null || echo unknown) | sed 's/^v//')
 
-CFLAGS := -Wall -Wextra -std=c99 -O2 -g -DVERSION='"$(VERSION)"'
+# EXTRA_CFLAGS lets callers append flags without overriding the defaults.
+# Example: `make EXTRA_CFLAGS=-m32`. The flag also reaches the link step
+# because $(CFLAGS) appears on the link command line below.
+EXTRA_CFLAGS ?=
+
+CFLAGS := -Wall -Wextra -std=c99 -O2 -g $(EXTRA_CFLAGS) -DVERSION='"$(VERSION)"'
 LDFLAGS :=
 
 ifneq ($(findstring mingw,$(CC)),)

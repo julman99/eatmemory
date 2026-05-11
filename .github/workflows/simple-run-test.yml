@@ -2,9 +2,9 @@ name: Simple Run Test
 
 on:
   push:
-    branches: [ main, master, v* ]
+    branches: [main, master, v*]
   pull_request:
-    branches: [ main, master, v* ]
+    branches: [main, master, v*]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -13,50 +13,56 @@ concurrency:
 jobs:
   simple-run-test:
     strategy:
-      matrix:
-        os: [ubuntu-latest, ubuntu-24.04, ubuntu-22.04, ubuntu-24.04-arm, ubuntu-22.04-arm, macos-latest, windows-latest, windows-11-arm]
       fail-fast: false
-    
+      matrix:
+        include:
+          - { os: ubuntu-latest }
+          - { os: ubuntu-24.04 }
+          - { os: ubuntu-22.04 }
+          - { os: ubuntu-latest, extra_cflags: "-m32" } #32-bit x86 via gcc-multilib
+          - { os: ubuntu-24.04-arm }
+          - { os: ubuntu-22.04-arm }
+          - { os: macos-latest }
+          - { os: windows-latest }
+          - { os: windows-11-arm }
+
     runs-on: ${{ matrix.os }}
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-    
-    # Linux setup
-    - name: Install dependencies (Linux)
-      if: runner.os == 'Linux'
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y build-essential gcc make
-    
-    # macOS setup  
-    - name: Install dependencies (macOS)
-      if: runner.os == 'macOS'
-      run: |
-        which gcc || which clang
-        which make
-    
-    # Windows setup with MSYS2
-    - name: Setup MSYS2 (Windows)
-      if: runner.os == 'Windows'
-      uses: msys2/setup-msys2@v2
-      with:
-        msystem: UCRT64
-        update: true
-        install: >-
-          mingw-w64-ucrt-x86_64-gcc
-          mingw-w64-ucrt-x86_64-make
-          make
-          bash
-    
-    # Run the test on Unix systems
-    - name: Run simple test (Unix)
-      if: runner.os != 'Windows'
-      run: bash test/simple.test.sh
-    
-    # Run the test on Windows with MSYS2 environment
-    - name: Run simple test (Windows)
-      if: runner.os == 'Windows'
-      shell: msys2 {0}
-      run: bash test/simple.test.sh 
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential gcc make ${{ matrix.extra_cflags && 'gcc-multilib' || '' }}
+
+      - name: Install dependencies (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          which gcc || which clang
+          which make
+
+      - name: Setup MSYS2 (Windows)
+        if: runner.os == 'Windows'
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-make
+            make
+            bash
+
+      - name: Run simple test (Unix)
+        if: runner.os != 'Windows'
+        env:
+          EXTRA_CFLAGS: ${{ matrix.extra_cflags }}
+        run: bash test/simple.test.sh
+
+      - name: Run simple test (Windows)
+        if: runner.os == 'Windows'
+        shell: msys2 {0}
+        run: bash test/simple.test.sh
