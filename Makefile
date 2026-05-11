@@ -1,6 +1,6 @@
 CC ?= gcc
 CFLAGS := -Wall -Wextra -std=c99 -O2 -g
-LDFLAGS := -lm
+LDFLAGS :=
 
 # Add Windows-specific libraries when cross-compiling for Windows
 ifneq ($(findstring mingw,$(CC)),)

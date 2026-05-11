@@ -2,7 +2,6 @@
 #include "errors.h"
 #include <string.h>
 #include <ctype.h>
-#include <math.h>
 #include <stdlib.h>
 #include <errno.h>
 
@@ -67,18 +66,22 @@ size_t string_to_bytes(char * str, eatmemory_error* error) {
 
 
 
+// Integer round-to-nearest division. Equivalent to round((double)n / d) for
+// non-negative inputs, but without the math.h dependency and without an
+// intermediate floating-point step that would lose precision near SIZE_MAX.
+static size_t div_round_nearest(size_t n, size_t d) {
+    return n / d + (n % d >= d / 2 ? 1 : 0);
+}
+
 char * bytes_to_string(size_t bytes, char * str){
     if (bytes < 1024) {
         sprintf(str, "%zu bytes", bytes);
     } else if (bytes < 1 * TO_MB -1) {
-        size_t kb = round(bytes / TO_KB);
-        sprintf(str, "%zuK", kb);
+        sprintf(str, "%zuK", div_round_nearest(bytes, TO_KB));
     } else if (bytes < 1 * TO_GB -1) {
-        size_t mb = round(bytes / TO_MB);
-        sprintf(str, "%zuM", mb);
+        sprintf(str, "%zuM", div_round_nearest(bytes, TO_MB));
     } else {
-        size_t gb = round(bytes / TO_GB);
-        sprintf(str, "%zuG", gb);
+        sprintf(str, "%zuG", div_round_nearest(bytes, TO_GB));
     }
     return str;
 }

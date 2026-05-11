@@ -20,7 +20,6 @@
 #include "args.h"
 #include <unistd.h>
 #include "errors.h"
-#include "math.h"
 
 char tmpstr[255] = "";
 char tmpstr2[255] = "";
