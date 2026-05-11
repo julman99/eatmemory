@@ -80,11 +80,11 @@ int main(int argc, char *argv[]){
 
     char* memory_to_eat = ap_get_args(parser)[0];
     eatmemory_error err = 0;
-    long size = string_to_bytes(memory_to_eat, &err);
+    size_t size = string_to_bytes(memory_to_eat, &err);
     print_and_exit_if_error(err,"Memory to eat is invalid", EM_ERROR_MEMORY_ARG_INVALID);
 
     char * chunk_str = ap_get_str_value(parser, "chunk-size");
-    long chunk = strcmp(chunk_str, STR_CHUNK_AUTO) != 0 ? string_to_bytes(chunk_str, &err) : get_auto_chunk_size(size);
+    size_t chunk = strcmp(chunk_str, STR_CHUNK_AUTO) != 0 ? string_to_bytes(chunk_str, &err) : get_auto_chunk_size(size);
     print_and_exit_if_error(err, "Chunk size is invalid", EM_ERROR_CHUNK_SIZE_ARG_INVALID);
 
     ap_free(parser);
@@ -104,7 +104,7 @@ int main(int argc, char *argv[]){
     }
     
     // Warn if allocation is too small for reliable memory verification
-    if (process_test.supported && (unsigned long)size < MIN_VERIFICATION_THRESHOLD_BYTES) {
+    if (process_test.supported && size < MIN_VERIFICATION_THRESHOLD_BYTES) {
         printf("WARNING: Memory allocation verification is disabled for allocations smaller than %luKB due to OS memory measurement precision limitations.\n", MIN_VERIFICATION_THRESHOLD_BYTES / TO_KB);
         printf("\n");
     }
