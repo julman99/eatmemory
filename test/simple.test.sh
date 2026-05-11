@@ -36,19 +36,43 @@ if [[ ! -f "output/eatmemory" ]]; then
     exit 1
 fi
 
-# Helper function to run a test case
+# Helper function to run a test case that should succeed (exit 0).
 run_test() {
     local test_num="$1"
     local description="$2"
     local args="$3"
     local expected_behavior="$4"
-    
+
     echo ""
     echo "Test $test_num: $description - $expected_behavior"
     echo "Command: ./output/eatmemory $args"
     echo "----------------------------------------------------------------------"
     ./output/eatmemory $args
     echo "✓ Test $test_num completed"
+}
+
+# Helper for tests that expect a specific non-zero exit code (error paths).
+# Asserts the binary exits with exactly $expected_exit and prints a useful
+# failure message otherwise.
+run_failing_test() {
+    local test_num="$1"
+    local description="$2"
+    local args="$3"
+    local expected_exit="$4"
+
+    echo ""
+    echo "Test $test_num: $description (expect exit $expected_exit)"
+    echo "Command: ./output/eatmemory $args"
+    echo "----------------------------------------------------------------------"
+    set +e
+    ./output/eatmemory $args
+    local actual_exit=$?
+    set -e
+    if [[ "$actual_exit" -ne "$expected_exit" ]]; then
+        echo "✗ Test $test_num FAILED: expected exit $expected_exit, got $actual_exit"
+        exit 1
+    fi
+    echo "✓ Test $test_num completed (exit $actual_exit as expected)"
 }
 
 echo ""
@@ -63,6 +87,25 @@ run_test "4" "Just above threshold (${THRESHOLD_PLUS_1_BYTES} bytes)" "${THRESHO
 run_test "5" "Well above threshold (${LARGE_TEST_SIZE})" "${LARGE_TEST_SIZE} -t 0" "Memory verification should be enabled"
 
 echo ""
+echo "Error-path regression tests:"
 echo "=================================================================================================="
-echo "✓ All edge case tests around MIN_VERIFICATION_THRESHOLD_BYTES completed successfully!"
-echo "✓ Verified behavior below, at, and above the ${THRESHOLD_KB}KB verification threshold" 
+
+# Exit codes (see src/errors.h):
+#   10 = EM_ERROR_MEMORY_ARG_INVALID       (size parse failed at any stage)
+#   11 = EM_ERROR_CHUNK_SIZE_ARG_INVALID   (chunk size invalid, including 0)
+
+# Empty size argument: previously a bounds-violating read of str[len-1] with
+# len==0; must now be rejected as a parse error.
+run_failing_test "6" "Empty size argument" '""' 10
+
+# Overflow in unit scaling: parsing succeeds but `bytes * TO_GB` would wrap
+# size_t. Must be rejected before any allocation is attempted.
+run_failing_test "7" "Overflow in G-unit scaling" "99999999999999999G" 10
+
+# Chunk size of zero: previously caused integer division by zero (SIGFPE on
+# Linux, SIGBUS on Darwin); must now be rejected cleanly.
+run_failing_test "8" "Chunk size of zero" "100M -s 0" 11
+
+echo ""
+echo "=================================================================================================="
+echo "✓ All tests completed successfully"

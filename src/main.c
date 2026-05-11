@@ -99,6 +99,8 @@ int main(int argc, char *argv[]){
         print_and_exit("Memory verification failed - a byte read back did not match the value written", EM_ERROR_MEMORY_VERIFICATION_FAILED);
     } else if(eat_error == EM_ERROR_CANNOT_ALLOCATE_MEMORY) {
         print_and_exit("Could not allocate the memory", EM_ERROR_CANNOT_ALLOCATE_MEMORY);
+    } else if(eat_error == EM_ERROR_CHUNK_SIZE_ARG_INVALID) {
+        print_and_exit("Chunk size must be greater than zero", EM_ERROR_CHUNK_SIZE_ARG_INVALID);
     }
 
     if(eaten.chunks){

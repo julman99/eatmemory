@@ -14,10 +14,21 @@
 
 size_t string_to_bytes(char * str, eatmemory_error* error) {
     const size_t len = strlen(str);
+    // An empty string would make str[len-1] read out of bounds (len-1 wraps
+    // to SIZE_MAX for size_t), and a string >= MAX_VALUE_STR_SIZE would not
+    // fit in the local buffer with a NUL terminator. Reject both up front.
+    if (len == 0 || len >= MAX_VALUE_STR_SIZE) {
+        *error = EM_ERROR_PARSE_SYNTAX;
+        return 0;
+    }
+
     char unit = str[len - 1];
     char value_numeric[MAX_VALUE_STR_SIZE];
 
-    strncpy(value_numeric, str, MAX_VALUE_STR_SIZE);
+    // memcpy of len+1 explicitly copies the NUL terminator. strncpy would
+    // leave value_numeric un-terminated when strlen(str) >= MAX_VALUE_STR_SIZE,
+    // which we have ruled out above but the explicit copy is clearer.
+    memcpy(value_numeric, str, len + 1);
     if(!isdigit(unit)) {
         value_numeric[len - 1] = '\0';
     }
@@ -37,27 +48,44 @@ size_t string_to_bytes(char * str, eatmemory_error* error) {
         return 0;
     }
 
-    if(!isdigit(unit) ) {
+    if(!isdigit(unit)) {
         unit = toupper(unit);
-        if(unit == 'K') {
-            bytes = bytes * TO_KB;
-        } else if(unit=='M') {
-            bytes = bytes * TO_MB;
-        } else if(unit=='G') {
-            bytes = bytes * TO_GB;
-        } else if (unit=='%') {
+        // All unit suffixes are syntactic sugar for `bytes * numerator / denominator`.
+        // K/M/G are linear multipliers; % is `bytes * memory_stats.free / 100`.
+        // Expressed uniformly, the conversion and its overflow check become a
+        // single shared code path.
+        size_t numerator = 0;
+        size_t denominator = 1;
+        if (unit == 'K') {
+            numerator = TO_KB;
+        } else if (unit == 'M') {
+            numerator = TO_MB;
+        } else if (unit == 'G') {
+            numerator = TO_GB;
+        } else if (unit == '%') {
             struct system_memory_stats memory_stats;
             get_system_memory_stats(&memory_stats);
-            if(memory_stats.supported) {
-                bytes = memory_stats.free * bytes / 100;
-            } else {
+            if (!memory_stats.supported) {
                 *error = EM_ERROR_PARSE_INVALID_UNIT;
                 return 0;
             }
+            numerator = memory_stats.free;
+            denominator = 100;
         } else {
             *error = EM_ERROR_PARSE_INVALID_UNIT;
             return 0;
         }
+
+        // Overflow gate for `bytes * numerator`. The numerator > 0 guard
+        // covers '%' where the numerator is runtime-derived and could
+        // theoretically be zero (system reports no free memory).
+        if (numerator > 0 && bytes > SIZE_MAX / numerator) {
+            *error = EM_ERROR_PARSE_OVERFLOW;
+            return 0;
+        }
+        // Multiply first, then divide -- preserves precision for small
+        // values of `bytes` in the '%' case.
+        bytes = bytes * numerator / denominator;
     }
 
     *error = EM_ERROR_NONE;
@@ -109,6 +137,13 @@ static inline uint8_t eatmemory_pattern(size_t chunk_index, size_t byte_offset, 
 struct allocation eat(size_t total, size_t chunk_size, eatmemory_error* error) {
     struct allocation result = { NULL, 0 };
     *error = EM_ERROR_NONE;
+
+    // eat() is a public-API function; guard against the caller passing a
+    // zero chunk size, which would otherwise trap on the division below.
+    if (chunk_size == 0) {
+        *error = EM_ERROR_CHUNK_SIZE_ARG_INVALID;
+        return result;
+    }
 
     size_t iterations = total/chunk_size;
     if(total % chunk_size > 0) {
