@@ -59,10 +59,11 @@ sudo make install
 Installs to `/usr/local/bin/eatmemory` by default. Override the install
 location with `make install PREFIX=/opt/local`.
 
-### macOS via Homebrew
+### Homebrew
+
+Available in [homebrew-core](https://github.com/Homebrew/homebrew-core/blob/main/Formula/e/eatmemory.rb):
 
 ```sh
-brew tap julman99/toolbox
 brew install eatmemory
 ```
 
