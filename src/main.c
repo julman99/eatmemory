@@ -40,7 +40,7 @@ void print_help() {
     printf("#                # Bytes      example: 1024\n");
     printf("#M               # Megabytes  example: 15M\n");
     printf("#G               # Gigabytes  example: 2G\n");
-#ifndef SYSMEM_MODE_UNKOWN
+#ifndef SYSMEM_MODE_UNKNOWN
     printf("#%%               # Percent    example: 50%%\n");
 #endif
     printf("\n");

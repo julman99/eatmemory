@@ -21,7 +21,7 @@
 #elif defined(__linux__)
     #define SYSMEM_MODE_LINUX
 #else
-    #define SYSMEM_MODE_UNKOWN
+    #define SYSMEM_MODE_UNKNOWN
 #endif
 
 
