@@ -1,10 +1,10 @@
+#ifndef eatmemory_h
+#define eatmemory_h
+
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include "errors.h"
-
-#ifndef eatmemory_h
-#define eatmemory_h
 
 #define TO_KB 1024UL
 #define TO_MB (1024UL * TO_KB)
