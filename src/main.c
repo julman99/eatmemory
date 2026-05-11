@@ -74,7 +74,7 @@ int main(int argc, char *argv[]){
 
     int timeout = ap_get_int_value(parser, "timeout");
 
-    char* memory_to_eat = ap_get_args(parser)[0];
+    char* memory_to_eat = ap_get_arg_at_index(parser, 0);
     eatmemory_error err = 0;
     size_t size = string_to_bytes(memory_to_eat, &err);
     print_and_exit_if_error(err,"Memory to eat is invalid", EM_ERROR_MEMORY_ARG_INVALID);
