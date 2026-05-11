@@ -107,7 +107,15 @@ int8_t** eat(size_t total, size_t chunk, eatmemory_error* error) {
         iterations++;
     }
     //Allocate an array to store all the chunks
+    if(iterations > SIZE_MAX / sizeof(int8_t *)) {
+        *error = EM_ERROR_CANNOT_ALLOCATE_MEMORY;
+        return NULL;
+    }
     int8_t** allocations = malloc(sizeof(int8_t *) * iterations);
+    if(allocations == NULL) {
+        *error = EM_ERROR_CANNOT_ALLOCATE_MEMORY;
+        return NULL;
+    }
     memset(allocations, 0, sizeof(int8_t *) * iterations);
 
     //now lets actually allocate each chunk in a way that ensures the memory is written an used
