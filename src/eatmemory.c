@@ -102,7 +102,7 @@ int8_t** eat(size_t total, size_t chunk, eatmemory_error* error) {
     struct process_memory_stats initial_memory;
     get_process_memory_stats(&initial_memory);
     
-    unsigned long iterations = total/chunk;
+    size_t iterations = total/chunk;
     if(total % chunk > 0) {
         iterations++;
     }
@@ -112,7 +112,7 @@ int8_t** eat(size_t total, size_t chunk, eatmemory_error* error) {
 
     //now lets actually allocate each chunk in a way that ensures the memory is written an used
     size_t allocated = 0;
-    for(unsigned long i=0; i<iterations; i++){
+    for(size_t i=0; i<iterations; i++){
         size_t allocate = MIN(chunk, total - allocated);
         int8_t *buffer = malloc(sizeof(int8_t) * allocate);
         if(buffer == NULL){
@@ -120,7 +120,7 @@ int8_t** eat(size_t total, size_t chunk, eatmemory_error* error) {
             *error = EM_ERROR_CANNOT_ALLOCATE_MEMORY;
             return NULL;
         }
-        for(unsigned long j=0; j<sizeof(int8_t) * allocate; j++) {
+        for(size_t j=0; j<sizeof(int8_t) * allocate; j++) {
             buffer[j] = 1;
         }
         allocations[i] = buffer;
@@ -174,11 +174,11 @@ int8_t** eat(size_t total, size_t chunk, eatmemory_error* error) {
 }
 
 void digest(int8_t** eaten, size_t total, size_t chunk) {
-    unsigned long iterations = total/chunk;
+    size_t iterations = total/chunk;
     if(total % chunk > 0) {
         iterations++;
     }
-    for(unsigned long i=0; i < iterations; i++){
+    for(size_t i=0; i < iterations; i++){
         if(eaten[i] != NULL) {
             free(eaten[i]);
         }
