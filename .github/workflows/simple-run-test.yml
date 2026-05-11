@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [ main, master, v* ]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   simple-run-test:
     strategy:
