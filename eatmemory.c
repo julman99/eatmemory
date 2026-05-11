@@ -57,16 +57,22 @@ void print_help() {
 }
 
 short** eat(long total,int chunk){
-	long i;
-    short** allocations = malloc(sizeof(short*) * (total/chunk));
-	for(i=0;i<total;i+=chunk){
-		short *buffer=malloc(sizeof(char)*chunk);
+    long count = (total + chunk - 1) / chunk;
+    short** allocations = malloc(sizeof(short*) * count);
+    if(allocations==NULL){
+        return NULL;
+    }
+    long idx = 0;
+    for(long i=0;i<total;i+=chunk){
+        short *buffer=malloc(sizeof(char)*chunk);
         if(buffer==NULL){
+            for(long j=0;j<idx;j++) free(allocations[j]);
+            free(allocations);
             return NULL;
         }
-		memset(buffer,0,chunk);
-        allocations[i/chunk] = buffer;
-	}
+        memset(buffer,0,chunk);
+        allocations[idx++] = buffer;
+    }
     return allocations;
 }
 
