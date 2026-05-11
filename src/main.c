@@ -5,7 +5,6 @@
  * Created on August 27, 2012, 2:23 PM
  */
 
-#define VERSION "0.1.10"
 #define _POSIX_C_SOURCE 200809L
 #define STR_NA "N/A"
 #define STR_CHUNK_AUTO "auto"

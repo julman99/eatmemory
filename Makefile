@@ -1,5 +1,13 @@
 CC ?= gcc
-CFLAGS := -Wall -Wextra -std=c99 -O2 -g
+
+# Version string is derived from the most recent v* tag plus the number of
+# commits since, the abbreviated commit hash, and a -dirty suffix if the
+# working tree has uncommitted changes. Falls back to "unknown" when built
+# outside a git checkout (e.g., from a source tarball). Override with
+# `make VERSION=v1.2.3` if you need to bake in a specific value.
+VERSION ?= $(shell git describe --tags --match 'v*' --always --dirty --abbrev=8 2>/dev/null || echo unknown)
+
+CFLAGS := -Wall -Wextra -std=c99 -O2 -g -DVERSION='"$(VERSION)"'
 LDFLAGS :=
 
 ifneq ($(findstring mingw,$(CC)),)
