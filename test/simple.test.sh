@@ -89,6 +89,13 @@ run_test "3" "Exactly 1 MB (${ONE_MB_KB} KB)"           "${ONE_MB_KB}K -t 0"    
 run_test "4" "1 byte over 1 MB (${OVER_1MB_BYTES} bytes)"   "${OVER_1MB_BYTES} -t 0"   "auto chunk size = 1 MB, last chunk smaller"
 run_test "5" "Well above 1 MB (${LARGE_TEST_SIZE})"     "${LARGE_TEST_SIZE} -t 0"  "auto chunk size = 1 MB, many chunks"
 
+# Percentage allocation: exercises the '%' branch through
+# get_system_memory_stats and the bytes * free / 100 conversion. 1% is small
+# enough to be safe on every CI runner while still exercising the path. The
+# 32-bit-specific 50% regression is covered separately by the
+# i686 dockcross run.
+run_test "6" "1% of available memory"                  "1% -t 0"                 "% branch with get_system_memory_stats"
+
 echo ""
 echo "Error-path regression tests:"
 echo "=================================================================================================="
@@ -99,21 +106,21 @@ echo "==========================================================================
 
 # Empty size argument: previously a bounds-violating read of str[len-1] with
 # len==0; must now be rejected as a parse error.
-run_failing_test "6" "Empty size argument" '""' 10
+run_failing_test "7" "Empty size argument" '""' 10
 
 # Overflow in unit scaling: parsing succeeds but `bytes * TO_GB` would wrap
 # size_t. Must be rejected before any allocation is attempted.
-run_failing_test "7" "Overflow in G-unit scaling" "99999999999999999G" 10
+run_failing_test "8" "Overflow in G-unit scaling" "99999999999999999G" 10
 
 # Chunk size of zero: previously caused integer division by zero (SIGFPE on
 # Linux, SIGBUS on Darwin); must now be rejected cleanly.
-run_failing_test "8" "Chunk size of zero" "100M -s 0" 11
+run_failing_test "9" "Chunk size of zero" "100M -s 0" 11
 
 # Bare unit suffix: stripping the unit leaves an empty numeric portion;
 # sscanf returns EOF and would leave `bytes` uninitialized. The strict
 # `== 0` check used to miss this; the fix uses `!= 1` instead.
-run_failing_test "9" "Bare unit suffix 'M'" "M" 10
-run_failing_test "10" "Bare percent suffix" '"%"' 10
+run_failing_test "10" "Bare unit suffix 'M'" "M" 10
+run_failing_test "11" "Bare percent suffix" '"%"' 10
 
 echo ""
 echo "=================================================================================================="

@@ -4,6 +4,7 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <inttypes.h>
 
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
 #define MAX_VALUE_STR_SIZE 255
@@ -33,21 +34,22 @@ size_t string_to_bytes(char * str, eatmemory_error* error) {
         value_numeric[len - 1] = '\0';
     }
 
-    //parse bytes into numeric variable
-    size_t bytes;
-    // Compare against 1, not 0: sscanf returns 0 when matching fails before
-    // any conversion, but EOF (-1) when the input is empty. The latter
-    // happens after stripping a bare unit suffix (e.g., "M" -> ""), and
-    // the strict == 0 check missed it -- letting an uninitialized `bytes`
-    // through to the next line.
-    if(sscanf(value_numeric, "%zu", &bytes) != 1) {
+    // Parse and apply unit math in uint64_t, then narrow to size_t at the
+    // return. This lets 32-bit platforms compute '50% of 2 GB' (a 100 GB
+    // intermediate, 1 GB final) without spuriously rejecting at the
+    // multiplication stage just because the intermediate exceeds size_t.
+    uint64_t bytes;
+    // sscanf returns 0 when matching fails before any conversion, EOF (-1)
+    // when the input is empty (which happens after stripping a bare unit
+    // like "M" -> ""). Compare against 1 to catch both.
+    if(sscanf(value_numeric, "%" SCNu64, &bytes) != 1) {
         *error = EM_ERROR_PARSE_SYNTAX;
         return 0;
     }
 
     //ensure parsed value can be converted to the original string
     char value_numeric_again[MAX_VALUE_STR_SIZE] = "";
-    sprintf(value_numeric_again, "%zu", bytes);
+    sprintf(value_numeric_again, "%" PRIu64, bytes);
     if(strcmp(value_numeric, value_numeric_again) != 0) {
         *error = EM_ERROR_PARSE_OVERFLOW;
         return 0;
@@ -59,8 +61,8 @@ size_t string_to_bytes(char * str, eatmemory_error* error) {
         // K/M/G are linear multipliers; % is `bytes * memory_stats.free / 100`.
         // Expressed uniformly, the conversion and its overflow check become a
         // single shared code path.
-        size_t numerator = 0;
-        size_t denominator = 1;
+        uint64_t numerator = 0;
+        uint64_t denominator = 1;
         if (unit == 'K') {
             numerator = TO_KB;
         } else if (unit == 'M') {
@@ -81,20 +83,27 @@ size_t string_to_bytes(char * str, eatmemory_error* error) {
             return 0;
         }
 
-        // Overflow gate for `bytes * numerator`. The numerator > 0 guard
-        // covers '%' where the numerator is runtime-derived and could
-        // theoretically be zero (system reports no free memory).
-        if (numerator > 0 && bytes > SIZE_MAX / numerator) {
+        // Catches the uint64_t multiplication itself wrapping (pathological
+        // huge inputs like '99999999999999999G'). numerator > 0 covers '%'
+        // where the runtime-derived numerator could theoretically be zero.
+        if (numerator > 0 && bytes > UINT64_MAX / numerator) {
             *error = EM_ERROR_PARSE_OVERFLOW;
             return 0;
         }
-        // Multiply first, then divide -- preserves precision for small
-        // values of `bytes` in the '%' case.
+        // Multiply first, then divide -- preserves precision for small values
+        // of `bytes` in the '%' case.
         bytes = bytes * numerator / denominator;
     }
 
+    // On 32-bit the unit-applied value may legitimately exceed SIZE_MAX
+    // (e.g., 'eatmemory 5G' on i686). Reject before the narrowing cast.
+    // Always-false on 64-bit (SIZE_MAX == UINT64_MAX) but harmless.
+    if (bytes > SIZE_MAX) {
+        *error = EM_ERROR_PARSE_OVERFLOW;
+        return 0;
+    }
     *error = EM_ERROR_NONE;
-    return bytes;
+    return (size_t)bytes;  // safe: bounded by the SIZE_MAX check above
 }
 
 
