@@ -2,9 +2,7 @@ CC ?= gcc
 CFLAGS := -Wall -Wextra -std=c99 -O2 -g
 LDFLAGS :=
 
-# Add Windows-specific libraries when cross-compiling for Windows
 ifneq ($(findstring mingw,$(CC)),)
-    LDFLAGS += -lpsapi
     EXE_SUFFIX := .exe
 else
     EXE_SUFFIX :=

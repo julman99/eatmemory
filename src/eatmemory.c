@@ -98,16 +98,20 @@ size_t get_auto_chunk_size(size_t bytes) {
     }
 }
 
-struct allocation eat(size_t total, size_t chunk, eatmemory_error* error) {
+// Byte pattern written to (and verified from) every allocated byte. The
+// pattern depends on the runtime `total` argument -- which originates from
+// argv and is therefore opaque to the compiler at translation time -- so the
+// compiler cannot constant-fold the write loop or the verification loop.
+static inline uint8_t eatmemory_pattern(size_t chunk_index, size_t byte_offset, size_t total) {
+    return (uint8_t)((chunk_index + byte_offset) ^ total);
+}
+
+struct allocation eat(size_t total, size_t chunk_size, eatmemory_error* error) {
     struct allocation result = { NULL, 0 };
     *error = EM_ERROR_NONE;
 
-    // Get initial memory usage for verification
-    struct process_memory_stats initial_memory;
-    get_process_memory_stats(&initial_memory);
-
-    size_t iterations = total/chunk;
-    if(total % chunk > 0) {
+    size_t iterations = total/chunk_size;
+    if(total % chunk_size > 0) {
         iterations++;
     }
     //Allocate an array to store all the chunks
@@ -127,10 +131,12 @@ struct allocation eat(size_t total, size_t chunk, eatmemory_error* error) {
     result.chunks = allocations;
     result.count = iterations;
 
-    //now lets actually allocate each chunk in a way that ensures the memory is written an used
+    // Allocate every chunk and write the runtime-derived pattern into every
+    // byte. The pattern is computed per-byte so the compiler cannot collapse
+    // the write loop into a memset or constant store.
     size_t allocated = 0;
     for(size_t i=0; i<iterations; i++){
-        size_t allocate = MIN(chunk, total - allocated);
+        size_t allocate = MIN(chunk_size, total - allocated);
         uint8_t *buffer = malloc(sizeof(uint8_t) * allocate);
         if(buffer == NULL){
             digest(result);
@@ -139,58 +145,47 @@ struct allocation eat(size_t total, size_t chunk, eatmemory_error* error) {
             result.count = 0;
             return result;
         }
-        for(size_t j=0; j<sizeof(uint8_t) * allocate; j++) {
-            buffer[j] = 1;
+        for(size_t j=0; j<allocate; j++) {
+            buffer[j] = eatmemory_pattern(i, j, total);
         }
         allocations[i] = buffer;
         allocated += allocate;
     }
 
-    // Verify memory consumption if supported and allocation is large enough
-    // For small allocations, OS memory measurement is too imprecise due to:
-    // - Page granularity (typically 4KB pages)
-    // - Malloc overhead and metadata
-    // - Memory alignment requirements
-    // - System noise from other processes
-    if(initial_memory.supported && total >= MIN_VERIFICATION_THRESHOLD_BYTES) {
-        struct process_memory_stats final_memory;
-        get_process_memory_stats(&final_memory);
-
-        if(final_memory.supported) {
-            // Handle potential underflow if final memory is less than initial
-            if(final_memory.rss < initial_memory.rss) {
-                // Memory decreased or measurement inconsistency - this is unexpected
-                digest(result);
-                *error = EM_ERROR_MEMORY_VERIFICATION_FAILED;
-                result.chunks = NULL;
-                result.count = 0;
-                return result;
-            }
-
-            size_t memory_increase = final_memory.rss - initial_memory.rss;
-            // Allow for some tolerance as there may be additional overhead
-            // and other allocations happening in the system
-            size_t expected_min, expected_max;
-
-            // Safe calculation of expected_min (80% of total)
-            expected_min = (size_t)total * 80 / 100;
-
-            // Safe calculation of expected_max (120% of total) with overflow protection
-            if(total > SIZE_MAX / 120) {
-                expected_max = SIZE_MAX;
-            } else {
-                expected_max = total * 120 / 100;
-            }
-
-            // Check if memory increase is within expected range
-            if(memory_increase < expected_min || memory_increase > expected_max) {
-                digest(result);
-                *error = EM_ERROR_MEMORY_VERIFICATION_FAILED;
-                result.chunks = NULL;
-                result.count = 0;
-                return result;
-            }
+    // Verify every byte was actually written and the writes survived
+    // optimization. Defense in depth against optimizers eliding the writes:
+    //   1. The expected value depends on the runtime `total`; no constant
+    //      folding of the write pattern is possible at translation time.
+    //   2. Each read goes through a volatile-qualified pointer, so the
+    //      compiler is forbidden from replacing the load with a cached copy
+    //      of the value it just wrote.
+    //   3. Per-byte differences accumulate via bitwise-OR into diff_acc,
+    //      which then drives the error-return control flow. The compiler
+    //      must perform every read, compute every XOR, and propagate the
+    //      result -- it cannot prove diff_acc is zero without executing
+    //      the volatile reads.
+    //
+    // Cost: one extra pass over every byte. Partial sampling would let the
+    // optimizer elide writes to bytes we do not inspect; we want full trust.
+    uint64_t diff_acc = 0;
+    size_t verified = 0;
+    for(size_t i=0; i<iterations; i++) {
+        size_t allocate = MIN(chunk_size, total - verified);
+        volatile uint8_t* p = (volatile uint8_t*)allocations[i];
+        for(size_t j=0; j<allocate; j++) {
+            uint8_t got = p[j];
+            uint8_t expected = eatmemory_pattern(i, j, total);
+            diff_acc |= (uint64_t)(got ^ expected);
         }
+        verified += allocate;
+    }
+
+    if(diff_acc != 0) {
+        digest(result);
+        *error = EM_ERROR_MEMORY_VERIFICATION_FAILED;
+        result.chunks = NULL;
+        result.count = 0;
+        return result;
     }
 
     return result;

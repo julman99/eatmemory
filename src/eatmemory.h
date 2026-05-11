@@ -10,10 +10,6 @@
 #define TO_MB (1024UL * TO_KB)
 #define TO_GB (1024UL * TO_MB)
 
-// Minimum allocation size for memory verification - below this threshold, 
-// OS memory measurement is too imprecise due to page granularity and malloc overhead
-#define MIN_VERIFICATION_THRESHOLD_BYTES 1UL * TO_MB  // 64 KB in bytes
-
 #ifdef __APPLE__
     #define SYSMEM_MODE_APPLE
 #elif defined(_WIN32) || defined(_WIN64)
@@ -31,16 +27,8 @@ struct system_memory_stats {
     size_t free;
 };
 
-struct process_memory_stats {
-    bool supported;
-    size_t rss; // Resident Set Size - actual physical memory used by the process
-};
-
 //system memory stats
 void get_system_memory_stats(struct system_memory_stats* stats);
-
-//process memory stats  
-void get_process_memory_stats(struct process_memory_stats* stats);
 
 //mem string parsing
 size_t string_to_bytes(char * str, eatmemory_error * error);
@@ -58,6 +46,6 @@ struct allocation {
 };
 
 size_t get_auto_chunk_size(size_t bytes);
-struct allocation eat(size_t total, size_t chunk, eatmemory_error* error);
+struct allocation eat(size_t total, size_t chunk_size, eatmemory_error* error);
 void digest(struct allocation alloc);
 #endif

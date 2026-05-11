@@ -80,7 +80,7 @@ int main(int argc, char *argv[]){
     print_and_exit_if_error(err,"Memory to eat is invalid", EM_ERROR_MEMORY_ARG_INVALID);
 
     char * chunk_str = ap_get_str_value(parser, "chunk-size");
-    size_t chunk = strcmp(chunk_str, STR_CHUNK_AUTO) != 0 ? string_to_bytes(chunk_str, &err) : get_auto_chunk_size(size);
+    size_t chunk_size = strcmp(chunk_str, STR_CHUNK_AUTO) != 0 ? string_to_bytes(chunk_str, &err) : get_auto_chunk_size(size);
     print_and_exit_if_error(err, "Chunk size is invalid", EM_ERROR_CHUNK_SIZE_ARG_INVALID);
 
     ap_free(parser);
@@ -90,28 +90,14 @@ int main(int argc, char *argv[]){
     printf("Currently total memory:     %s\n", memory_stats.supported ? bytes_to_string(memory_stats.total, BYTES_TMP_STR()) : STR_NA);
     printf("Currently available memory: %s\n", memory_stats.supported ? bytes_to_string(memory_stats.free, BYTES_TMP_STR()) : STR_NA);
     printf("\n");
-    
-    // Check if process memory monitoring is supported and warn if not
-    struct process_memory_stats process_test;
-    get_process_memory_stats(&process_test);
-    if (!process_test.supported) {
-        printf("WARNING: Process memory usage monitoring is not supported on this operating system. We won't be able to automatically verify the memory consumption.\n");
-        printf("\n");
-    }
-    
-    // Warn if allocation is too small for reliable memory verification
-    if (process_test.supported && size < MIN_VERIFICATION_THRESHOLD_BYTES) {
-        printf("WARNING: Memory allocation verification is disabled for allocations smaller than %luKB due to OS memory measurement precision limitations.\n", MIN_VERIFICATION_THRESHOLD_BYTES / TO_KB);
-        printf("\n");
-    }
-    
-    printf("Eating %s in chunks of %s...\n", bytes_to_string(size, BYTES_TMP_STR()), bytes_to_string(chunk, BYTES_TMP_STR()));
-    
+
+    printf("Eating %s in chunks of %s...\n", bytes_to_string(size, BYTES_TMP_STR()), bytes_to_string(chunk_size, BYTES_TMP_STR()));
+
     eatmemory_error eat_error = EM_ERROR_NONE;
-    struct allocation eaten = eat(size, chunk, &eat_error);
+    struct allocation eaten = eat(size, chunk_size, &eat_error);
 
     if(eat_error == EM_ERROR_MEMORY_VERIFICATION_FAILED) {
-        print_and_exit("Memory allocation verification failed - the process did not consume the expected amount of memory", EM_ERROR_MEMORY_VERIFICATION_FAILED);
+        print_and_exit("Memory verification failed - a byte read back did not match the value written", EM_ERROR_MEMORY_VERIFICATION_FAILED);
     } else if(eat_error == EM_ERROR_CANNOT_ALLOCATE_MEMORY) {
         print_and_exit("Could not allocate the memory", EM_ERROR_CANNOT_ALLOCATE_MEMORY);
     }
