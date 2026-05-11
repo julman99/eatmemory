@@ -1042,7 +1042,7 @@ ArgParser* ap_new_cmd(ArgParser* parent_parser, const char* name) {
             parent_parser->enable_help_command = true;
             return cmd_parser;
         } else {
-            parent_parser->command_vec--;
+            parent_parser->command_vec->count--;
             ap_free(cmd_parser);
             return NULL;
         }
