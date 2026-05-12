@@ -1,19 +1,13 @@
-FROM alpine:3.18.3 AS build
-MAINTAINER julman99
-LABEL Description="This image builds eatmemory"
+FROM alpine:3.23 AS build
+LABEL description="Builds eatmemory"
 
-RUN apk update
-RUN apk add make gcc musl-dev
+RUN apk add --no-cache make gcc musl-dev git
 
-RUN mkdir -pv /root/code
-COPY . /root/code/
-RUN chown root.root -R /root/code
-WORKDIR /root/code
+WORKDIR /src
+COPY . .
 RUN make
 
-FROM alpine:3.18.3
-MAINTAINER julman99
-LABEL Description="This image runs eatmemory, a simple C program to allocate memory from the command line. Useful to test programs or systems under high memory usage conditions"
-COPY --from=build /root/code/eatmemory /bin
-RUN chmod +x /bin/eatmemory
-ENTRYPOINT ["/bin/eatmemory"]
+FROM alpine:3.23
+LABEL description="A small tool to allocate memory from the command line"
+COPY --from=build /src/output/eatmemory /usr/local/bin/eatmemory
+ENTRYPOINT ["/usr/local/bin/eatmemory"]

@@ -1,0 +1,36 @@
+name: Docker Build Test
+
+on:
+  push:
+    branches: [ main, master, v* ]
+  pull_request:
+    branches: [ main, master, v* ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          # Full history so `git describe` inside the Dockerfile build stage
+          # produces a real version string instead of "unknown".
+          fetch-depth: 0
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build image (no push)
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: false
+          load: true
+          tags: eatmemory:ci
+
+      - name: Smoke test
+        run: docker run --rm eatmemory:ci 10M -t 0

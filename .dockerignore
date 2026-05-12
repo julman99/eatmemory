@@ -1,0 +1,8 @@
+# Allow-list: ignore everything by default, then opt back in only the
+# files the Docker build actually needs. New files (docs, tests, IDE
+# folders, build artifacts) cannot leak into the build context unless
+# they are explicitly listed below.
+*
+!Makefile
+!src/
+!.git/
