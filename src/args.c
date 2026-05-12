@@ -85,7 +85,7 @@ static int try_str_to_int(const char* string) {
     if (errno == ERANGE || result > INT_MAX || result < INT_MIN) {
         exit_with_error("'%s' is out of range", string);
     }
-    if (*endptr != '\0') {
+    if (endptr == string || *endptr != '\0') {
         exit_with_error("cannot parse '%s' as an integer", string);
     }
     return (int) result;
@@ -100,7 +100,7 @@ static double try_str_to_double(const char* string) {
     if (errno == ERANGE) {
         exit_with_error("'%s' is out of range", string);
     }
-    if (*endptr != '\0') {
+    if (endptr == string || *endptr != '\0') {
         exit_with_error("cannot parse '%s' as a floating-point value", string);
     }
     return result;

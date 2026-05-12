@@ -124,6 +124,7 @@ run_failing_test "11" "Chunk size of zero" "100M -s 0" 11
 run_failing_test "12" "Bare unit suffix 'M'" "M" 10
 run_failing_test "13" "Bare percent suffix" '"%"' 10
 run_failing_test "14" "Negative size argument" "-1M" 10
+run_failing_test "15" "Empty timeout value" "1K --timeout=" 1
 
 echo ""
 echo "=================================================================================================="
