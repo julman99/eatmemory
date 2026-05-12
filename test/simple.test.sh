@@ -127,5 +127,19 @@ run_failing_test "14" "Negative size argument" "-1M" 10
 run_failing_test "15" "Empty timeout value" "1K --timeout=" 1
 
 echo ""
+echo "Test 16: Leading whitespace before negative size argument (expect exit 10)"
+echo 'Command: ./output/eatmemory " -1M"'
+echo "----------------------------------------------------------------------"
+set +e
+./output/eatmemory " -1M"
+actual_exit=$?
+set -e
+if [[ "$actual_exit" -ne 10 ]]; then
+    echo "✗ Test 16 FAILED: expected exit 10, got $actual_exit"
+    exit 1
+fi
+echo "✓ Test 16 completed (exit $actual_exit as expected)"
+
+echo ""
 echo "=================================================================================================="
 echo "✓ All tests completed successfully"

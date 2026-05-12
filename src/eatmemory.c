@@ -7,56 +7,64 @@
 #include <inttypes.h>
 
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
-#define MAX_VALUE_STR_SIZE 255
 
 #define TO_KB 1024UL
 #define TO_MB (1024UL * TO_KB)
 #define TO_GB (1024UL * TO_MB)
 
 size_t string_to_bytes(char * str, eatmemory_error* error) {
-    const size_t len = strlen(str);
-    // An empty string would make str[len-1] read out of bounds (len-1 wraps
-    // to SIZE_MAX for size_t), and a string >= MAX_VALUE_STR_SIZE would not
-    // fit in the local buffer with a NUL terminator. Reject both up front.
-    if (len == 0 || len >= MAX_VALUE_STR_SIZE) {
+    if (str == NULL) {
         *error = EM_ERROR_PARSE_SYNTAX;
         return 0;
     }
 
-    char unit = str[len - 1];
-    char value_numeric[MAX_VALUE_STR_SIZE];
+    char* start = str;
+    while (isspace((unsigned char)*start)) {
+        start++;
+    }
 
-    // memcpy of len+1 explicitly copies the NUL terminator. strncpy would
-    // leave value_numeric un-terminated when strlen(str) >= MAX_VALUE_STR_SIZE,
-    // which we have ruled out above but the explicit copy is clearer.
-    memcpy(value_numeric, str, len + 1);
-    if(!isdigit((unsigned char)unit)) {
-        value_numeric[len - 1] = '\0';
+    if (*start == '-') {
+        *error = EM_ERROR_PARSE_SYNTAX;
+        return 0;
+    }
+
+    errno = 0;
+    char* endptr = NULL;
+    uintmax_t parsed = strtoumax(start, &endptr, 10);
+    if (endptr == start) {
+        *error = EM_ERROR_PARSE_SYNTAX;
+        return 0;
+    }
+    if (errno == ERANGE || parsed > UINT64_MAX) {
+        *error = EM_ERROR_PARSE_OVERFLOW;
+        return 0;
+    }
+
+    while (isspace((unsigned char)*endptr)) {
+        endptr++;
+    }
+
+    char unit = '\0';
+    if (*endptr != '\0') {
+        unit = (char)toupper((unsigned char)*endptr);
+        endptr++;
+
+        while (isspace((unsigned char)*endptr)) {
+            endptr++;
+        }
+        if (*endptr != '\0') {
+            *error = EM_ERROR_PARSE_SYNTAX;
+            return 0;
+        }
     }
 
     // Parse and apply unit math in uint64_t, then narrow to size_t at the
     // return. This lets 32-bit platforms compute '50% of 2 GB' (a 100 GB
     // intermediate, 1 GB final) without spuriously rejecting at the
     // multiplication stage just because the intermediate exceeds size_t.
-    if (value_numeric[0] == '-') {
-        *error = EM_ERROR_PARSE_SYNTAX;
-        return 0;
-    }
-    errno = 0;
-    char* endptr = NULL;
-    uintmax_t parsed = strtoumax(value_numeric, &endptr, 10);
-    if (endptr == value_numeric || *endptr != '\0') {
-        *error = EM_ERROR_PARSE_SYNTAX;
-        return 0;
-    }
-    if(errno == ERANGE || parsed > UINT64_MAX) {
-        *error = EM_ERROR_PARSE_OVERFLOW;
-        return 0;
-    }
     uint64_t bytes = (uint64_t)parsed;
 
-    if(!isdigit((unsigned char)unit)) {
-        unit = (char)toupper((unsigned char)unit);
+    if (unit != '\0') {
         // All unit suffixes are syntactic sugar for `bytes * numerator / denominator`.
         // K/M/G are linear multipliers; % is `bytes * memory_stats.free / 100`.
         // Expressed uniformly, the conversion and its overflow check become a
@@ -70,6 +78,10 @@ size_t string_to_bytes(char * str, eatmemory_error* error) {
         } else if (unit == 'G') {
             numerator = TO_GB;
         } else if (unit == '%') {
+#ifdef SYSMEM_MODE_UNKNOWN
+            *error = EM_ERROR_PARSE_INVALID_UNIT;
+            return 0;
+#else
             struct system_memory_stats memory_stats;
             get_system_memory_stats(&memory_stats);
             if (!memory_stats.supported) {
@@ -78,6 +90,7 @@ size_t string_to_bytes(char * str, eatmemory_error* error) {
             }
             numerator = memory_stats.free;
             denominator = 100;
+#endif
         } else {
             *error = EM_ERROR_PARSE_INVALID_UNIT;
             return 0;
