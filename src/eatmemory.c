@@ -30,7 +30,7 @@ size_t string_to_bytes(char * str, eatmemory_error* error) {
     // leave value_numeric un-terminated when strlen(str) >= MAX_VALUE_STR_SIZE,
     // which we have ruled out above but the explicit copy is clearer.
     memcpy(value_numeric, str, len + 1);
-    if(!isdigit(unit)) {
+    if(!isdigit((unsigned char)unit)) {
         value_numeric[len - 1] = '\0';
     }
 
@@ -38,25 +38,25 @@ size_t string_to_bytes(char * str, eatmemory_error* error) {
     // return. This lets 32-bit platforms compute '50% of 2 GB' (a 100 GB
     // intermediate, 1 GB final) without spuriously rejecting at the
     // multiplication stage just because the intermediate exceeds size_t.
-    uint64_t bytes;
-    // sscanf returns 0 when matching fails before any conversion, EOF (-1)
-    // when the input is empty (which happens after stripping a bare unit
-    // like "M" -> ""). Compare against 1 to catch both.
-    if(sscanf(value_numeric, "%" SCNu64, &bytes) != 1) {
+    if (value_numeric[0] == '-') {
         *error = EM_ERROR_PARSE_SYNTAX;
         return 0;
     }
-
-    //ensure parsed value can be converted to the original string
-    char value_numeric_again[MAX_VALUE_STR_SIZE] = "";
-    sprintf(value_numeric_again, "%" PRIu64, bytes);
-    if(strcmp(value_numeric, value_numeric_again) != 0) {
+    errno = 0;
+    char* endptr = NULL;
+    uintmax_t parsed = strtoumax(value_numeric, &endptr, 10);
+    if (endptr == value_numeric || *endptr != '\0') {
+        *error = EM_ERROR_PARSE_SYNTAX;
+        return 0;
+    }
+    if(errno == ERANGE || parsed > UINT64_MAX) {
         *error = EM_ERROR_PARSE_OVERFLOW;
         return 0;
     }
+    uint64_t bytes = (uint64_t)parsed;
 
-    if(!isdigit(unit)) {
-        unit = toupper(unit);
+    if(!isdigit((unsigned char)unit)) {
+        unit = (char)toupper((unsigned char)unit);
         // All unit suffixes are syntactic sugar for `bytes * numerator / denominator`.
         // K/M/G are linear multipliers; % is `bytes * memory_stats.free / 100`.
         // Expressed uniformly, the conversion and its overflow check become a
