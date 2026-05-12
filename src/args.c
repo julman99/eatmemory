@@ -38,6 +38,7 @@ static char* str(const char* format_string, ...) {
     va_start(args, format_string);
     int len = vsnprintf(NULL, 0, format_string, args);
     if (len < 0) {
+        va_end(args);
         return NULL;
     }
     va_end(args);
