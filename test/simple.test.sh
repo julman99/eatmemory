@@ -27,10 +27,10 @@ echo "Changing to project directory..."
 cd "$PROJECT_ROOT"
 
 echo "Cleaning previous build..."
-make clean
+"${MAKE:-make}" clean
 
 echo "Building eatmemory..."
-make
+"${MAKE:-make}"
 
 echo "Checking if eatmemory executable exists..."
 if [[ ! -f "output/eatmemory" ]]; then
