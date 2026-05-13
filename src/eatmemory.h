@@ -16,6 +16,8 @@
     #define SYSMEM_MODE_WINDOWS
 #elif defined(_AIX)
     #define SYSMEM_MODE_AIX
+#elif defined(__sun)
+    #define SYSMEM_MODE_SOLARIS
 #elif defined(__linux__)
     #define SYSMEM_MODE_LINUX
 #else
