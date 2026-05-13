@@ -17,7 +17,7 @@ void get_system_memory_stats(struct system_memory_stats* stats) {
     long page_size = sysconf(_SC_PAGE_SIZE);
     long free_pages = sysconf(_SC_AVPHYS_PAGES);
 
-    if (pages > 0 && page_size > 0 && free_pages > 0) {
+    if (pages > 0 && page_size > 0 && free_pages >= 0) {
         stats->total = pages_to_bytes_clamped(pages, page_size);
         stats->free = pages_to_bytes_clamped(free_pages, page_size);
         stats->supported = true;
