@@ -17,6 +17,11 @@ EXTRA_CFLAGS ?=
 CFLAGS := -Wall -Wextra -std=c99 -O2 -g $(EXTRA_CFLAGS) -DVERSION='"$(VERSION)"'
 LDFLAGS :=
 
+UNAME_S := $(shell uname -s 2>/dev/null)
+ifeq ($(UNAME_S),AIX)
+    LDFLAGS += -lperfstat
+endif
+
 ifneq ($(findstring mingw,$(CC)),)
     EXE_SUFFIX := .exe
 else
@@ -64,7 +69,6 @@ help:
 	@echo "  help          - Display this help message"
 
 .PHONY: all install clean help
-
 
 
 
