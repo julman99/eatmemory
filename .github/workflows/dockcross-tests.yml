@@ -1,9 +1,8 @@
 name: Dockercross Cross-Compilation Tests
 
 on:
+  workflow_dispatch:
   push:
-    branches: [ main, master, v* ]
-  pull_request:
     branches: [ main, master, v* ]
 
 concurrency:
@@ -42,4 +41,4 @@ jobs:
     - name: Test ${{ matrix.target }}
       run: |
         echo "Testing dockercross target: ${{ matrix.target }}"
-        docker run -i --rm -v "$PWD:/src" dockcross/${{ matrix.target }} bash -c 'cd /src && make clean && make' 
+        docker run -i --rm -v "$PWD:/src" dockcross/${{ matrix.target }} bash -c 'cd /src && make clean && make'

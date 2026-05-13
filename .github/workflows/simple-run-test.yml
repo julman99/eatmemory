@@ -1,9 +1,8 @@
 name: Simple Run Test
 
 on:
+  workflow_dispatch:
   push:
-    branches: [main, master, v*]
-  pull_request:
     branches: [main, master, v*]
 
 concurrency:
