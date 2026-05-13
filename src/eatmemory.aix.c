@@ -2,6 +2,9 @@
 #ifdef SYSMEM_MODE_AIX
 #include <libperfstat.h>
 
+/* libperfstat always reports real_total/real_free in 4 KB units regardless
+ * of the system page size (e.g. 64 KB large pages); do not replace with
+ * sysconf(_SC_PAGE_SIZE). See IBM perfstat_memory_total_t documentation. */
 #define AIX_PERFSTAT_PAGE_SIZE 4096ULL
 
 static size_t pages_4k_to_bytes_clamped(u_longlong_t pages) {
