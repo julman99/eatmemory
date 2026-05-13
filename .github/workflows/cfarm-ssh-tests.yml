@@ -1,0 +1,136 @@
+name: Compile Farm SSH Tests
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  cfarm-ssh-test:
+    name: ${{ matrix.name }} (${{ matrix.host }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: aix
+            host: cfarm119.cfarm.net
+            host_key: cfarm119.cfarm.net ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIB3/qHMdOGpZ8DD5E8J7falo8IDJ962oGsgSycuHXXRO
+            cc: /opt/freeware/bin/gcc
+            shell: /opt/freeware/bin/bash
+            path: /opt/freeware/bin:/usr/bin:/bin
+            test_script: test/simple.test.sh
+
+    concurrency:
+      group: cfarm-${{ matrix.host }}
+      cancel-in-progress: false
+
+    env:
+      CFARM_NAME: ${{ matrix.name }}
+      CFARM_HOST: ${{ matrix.host }}
+      CFARM_HOST_KEY: ${{ matrix.host_key }}
+      CFARM_CC: ${{ matrix.cc }}
+      CFARM_SHELL: ${{ matrix.shell }}
+      CFARM_PATH: ${{ matrix.path }}
+      CFARM_TEST_SCRIPT: ${{ matrix.test_script }}
+      CFARM_USER: ${{ secrets.CFARM_USER }}
+      CFARM_SSH_KEY: ${{ secrets.CFARM_SSH_KEY }}
+      IS_FORK_PR: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Check compile farm SSH secrets
+        id: cfarm-secrets
+        shell: bash
+        run: |
+          if [[ -z "$CFARM_USER" || -z "$CFARM_SSH_KEY" ]]; then
+            if [[ "$IS_FORK_PR" != "true" ]]; then
+              echo "::error::CFARM_USER and CFARM_SSH_KEY secrets are required for compile farm SSH tests."
+              exit 1
+            fi
+
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "Compile farm SSH secrets are not available to forked pull requests; skipping compile farm test."
+          else
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Configure SSH
+        id: configure-ssh
+        if: steps.cfarm-secrets.outputs.available == 'true'
+        shell: bash
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$CFARM_SSH_KEY" > ~/.ssh/cfarm_ci_key
+          chmod 600 ~/.ssh/cfarm_ci_key
+          printf '%s\n' "$CFARM_HOST_KEY" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+          cat > ~/.ssh/config <<EOF
+          Host cfarm-ci
+            HostName $CFARM_HOST
+            HostKeyAlias $CFARM_HOST
+            User $CFARM_USER
+            IdentityFile ~/.ssh/cfarm_ci_key
+            IdentitiesOnly yes
+            StrictHostKeyChecking yes
+            UserKnownHostsFile ~/.ssh/known_hosts
+            BatchMode yes
+          EOF
+          chmod 600 ~/.ssh/config
+
+      - name: Prepare remote workspace
+        id: remote-workspace
+        if: steps.cfarm-secrets.outputs.available == 'true'
+        shell: bash
+        run: |
+          remote_home="$(ssh cfarm-ci 'printf "%s" "$HOME"')"
+          run_date="$(date -u +%Y-%m-%dT%H%M%SZ)"
+          remote_work="$remote_home/eatmemory-ci/runs/${run_date}-${CFARM_NAME}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+
+          echo "path=$remote_work" >> "$GITHUB_OUTPUT"
+          echo "REMOTE_WORK=$remote_work" >> "$GITHUB_ENV"
+
+          ssh cfarm-ci "REMOTE_WORK=$remote_work /usr/bin/ksh -s" <<'EOF'
+          set -eu
+
+          base="$HOME/eatmemory-ci/runs"
+          /usr/bin/mkdir -p "$base"
+          /usr/bin/chmod 700 "$HOME/eatmemory-ci" "$base"
+
+          for path in "$base"/*; do
+            if [ -d "$path" ]; then
+              /usr/bin/find "$path" -prune -type d -mtime +7 -exec /usr/bin/rm -rf {} \;
+            fi
+          done
+
+          /usr/bin/mkdir -p "$REMOTE_WORK"
+          /usr/bin/chmod 700 "$REMOTE_WORK"
+          EOF
+
+      - name: Copy source to compile farm host
+        if: steps.cfarm-secrets.outputs.available == 'true'
+        shell: bash
+        run: |
+          git archive --format=tar HEAD | ssh cfarm-ci "cd \"$REMOTE_WORK\" && /usr/bin/tar -xf -"
+
+      - name: Build and test on compile farm host
+        if: steps.cfarm-secrets.outputs.available == 'true'
+        shell: bash
+        run: |
+          ssh cfarm-ci "cd \"$REMOTE_WORK\" && PATH=\"$CFARM_PATH\" CC=\"$CFARM_CC\" \"$CFARM_SHELL\" \"$CFARM_TEST_SCRIPT\""
+
+      - name: Clean remote workspace
+        if: always() && steps.cfarm-secrets.outputs.available == 'true'
+        continue-on-error: true
+        shell: bash
+        run: |
+          if [[ -n "${REMOTE_WORK:-}" ]]; then
+            ssh cfarm-ci "/usr/bin/rm -rf \"$REMOTE_WORK\""
+          fi
