@@ -17,41 +17,17 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: aix
-            host: cfarm119.cfarm.net
-            host_key: cfarm119.cfarm.net ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIB3/qHMdOGpZ8DD5E8J7falo8IDJ962oGsgSycuHXXRO
-            cc: /opt/freeware/bin/gcc
-            make: /opt/freeware/bin/make
+          - name: freebsd
+            host: cfarm430.cfarm.net
+            port: 22430
+            host_key: cfarm430.cfarm.net ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIInfLqQ7/xsj/KZjLNwyzj5Lck2eqCZLvjZn771LPXFc
+            cc: /usr/bin/cc
+            make: /usr/local/bin/gmake
+            tar: /usr/bin/tar
+            kex_algorithms: curve25519-sha256
             extra_cflags: ""
-            shell: /opt/freeware/bin/bash
-            path: /opt/freeware/bin:/usr/bin:/bin
-            test_script: test/simple.test.sh
-          - name: aix-64
-            host: cfarm119.cfarm.net
-            host_key: cfarm119.cfarm.net ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIB3/qHMdOGpZ8DD5E8J7falo8IDJ962oGsgSycuHXXRO
-            cc: /opt/freeware/bin/gcc
-            make: /opt/freeware/bin/make
-            extra_cflags: -maix64
-            shell: /opt/freeware/bin/bash
-            path: /opt/freeware/bin:/usr/bin:/bin
-            test_script: test/simple.test.sh
-          - name: solaris-64
-            host: cfarm215.cfarm.net
-            host_key: cfarm215.cfarm.net ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHaWRY0hu3p8Nf8NOHQY4rNT5Ph+M5uL+Hjl0fnROCZv
-            cc: /usr/bin/gcc
-            make: /usr/bin/gmake
-            extra_cflags: -m64
-            shell: /usr/bin/bash
-            path: /usr/bin:/bin:/usr/sbin:/sbin
-            test_script: test/simple.test.sh
-          - name: solaris-32
-            host: cfarm215.cfarm.net
-            host_key: cfarm215.cfarm.net ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHaWRY0hu3p8Nf8NOHQY4rNT5Ph+M5uL+Hjl0fnROCZv
-            cc: /usr/bin/gcc
-            make: /usr/bin/gmake
-            extra_cflags: -m32
-            shell: /usr/bin/bash
-            path: /usr/bin:/bin:/usr/sbin:/sbin
+            shell: /usr/local/bin/bash
+            path: /usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
             test_script: test/simple.test.sh
 
     concurrency:
@@ -61,9 +37,12 @@ jobs:
     env:
       CFARM_NAME: ${{ matrix.name }}
       CFARM_HOST: ${{ matrix.host }}
+      CFARM_PORT: ${{ matrix.port }}
       CFARM_HOST_KEY: ${{ matrix.host_key }}
       CFARM_CC: ${{ matrix.cc }}
       CFARM_MAKE: ${{ matrix.make }}
+      CFARM_TAR: ${{ matrix.tar }}
+      CFARM_KEX_ALGORITHMS: ${{ matrix.kex_algorithms || '' }}
       CFARM_EXTRA_CFLAGS: ${{ matrix.extra_cflags }}
       CFARM_SHELL: ${{ matrix.shell }}
       CFARM_PATH: ${{ matrix.path }}
@@ -71,6 +50,8 @@ jobs:
       CFARM_USER: ${{ secrets.CFARM_USER }}
       CFARM_SSH_KEY: ${{ secrets.CFARM_SSH_KEY }}
       IS_FORK_PR: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
+      SOURCE_REPO: https://github.com/${{ github.repository }}.git
+      SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
 
     steps:
       - name: Checkout code
@@ -106,6 +87,7 @@ jobs:
           cat > ~/.ssh/config <<EOF
           Host cfarm-ci
             HostName $CFARM_HOST
+            Port $CFARM_PORT
             HostKeyAlias $CFARM_HOST
             User $CFARM_USER
             IdentityFile ~/.ssh/cfarm_ci_key
@@ -114,54 +96,82 @@ jobs:
             UserKnownHostsFile ~/.ssh/known_hosts
             BatchMode yes
           EOF
+          if [[ -n "$CFARM_KEX_ALGORITHMS" ]]; then
+            printf '  KexAlgorithms %s\n' "$CFARM_KEX_ALGORITHMS" >> ~/.ssh/config
+          fi
           chmod 600 ~/.ssh/config
 
-      - name: Prepare remote workspace
+      - name: Diagnose FreeBSD SSH and remote git
         id: remote-workspace
         if: steps.cfarm-secrets.outputs.available == 'true'
         shell: bash
         run: |
-          remote_home="$(ssh cfarm-ci 'printf "%s" "$HOME"')"
+          set -u
+
           run_date="$(date -u +%Y-%m-%dT%H%M%SZ)"
-          remote_work="$remote_home/eatmemory-ci/runs/${run_date}-${CFARM_NAME}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          remote_work="eatmemory-ci/runs/${run_date}-${CFARM_NAME}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          remote_debug_log="eatmemory-ci/debug-${run_date}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}.log"
 
           echo "path=$remote_work" >> "$GITHUB_OUTPUT"
           echo "REMOTE_WORK=$remote_work" >> "$GITHUB_ENV"
+          echo "REMOTE_DEBUG_LOG=$remote_debug_log" >> "$GITHUB_ENV"
 
-          ssh cfarm-ci "REMOTE_WORK=$remote_work /usr/bin/ksh -s" <<'EOF'
+          timestamp() {
+            date -u +"%Y-%m-%dT%H:%M:%SZ"
+          }
+
+          echo "$(timestamp) probe 1: ssh command"
+          timeout 45s ssh -vvv -T cfarm-ci 'printf "ssh-ok home=<%s> shell=<%s>\n" "$HOME" "$SHELL"; uname -a'
+
+          echo "$(timestamp) prepare remote workspace and watchdog"
+          timeout 45s ssh -T cfarm-ci "REMOTE_WORK=$remote_work REMOTE_DEBUG_LOG=$remote_debug_log PATH=\"$CFARM_PATH\" \"$CFARM_SHELL\" -s" <<'EOF'
           set -eu
-
           base="$HOME/eatmemory-ci/runs"
-          /usr/bin/mkdir -p "$base"
-          /usr/bin/chmod 700 "$HOME/eatmemory-ci" "$base"
-
+          mkdir -p "$base"
+          chmod 700 "$HOME/eatmemory-ci" "$base"
           for path in "$base"/*; do
             if [ -d "$path" ]; then
-              /usr/bin/find "$path" -prune -type d -mtime +7 -exec /usr/bin/rm -rf {} \;
+              find "$path" -prune -type d -mtime +7 -exec rm -rf {} \;
             fi
           done
-
-          /usr/bin/mkdir -p "$REMOTE_WORK"
-          /usr/bin/chmod 700 "$REMOTE_WORK"
+          rm -rf "$HOME/$REMOTE_WORK"
+          mkdir -p "$HOME/$REMOTE_WORK"
+          chmod 700 "$HOME/$REMOTE_WORK"
+          (
+            while :; do
+              date -u
+              ps -uxww | egrep 'ssh|scp|sftp|git|make|gmake|cc|tar|eatmemory-ci' | grep -v egrep || true
+              sleep 5
+            done
+          ) > "$HOME/$REMOTE_DEBUG_LOG" 2>&1 &
+          echo "$!" > "$HOME/$REMOTE_WORK/watchdog.pid"
           EOF
 
-      - name: Copy source to compile farm host
-        if: steps.cfarm-secrets.outputs.available == 'true'
-        shell: bash
-        run: |
-          tar --format=ustar --exclude .git --exclude output --exclude .DS_Store -cf - . | ssh cfarm-ci "cd \"$REMOTE_WORK\" && /usr/bin/tar -xf -"
+          echo "$(timestamp) probe 2: remote git fetch and test"
+          timeout 240s ssh -vvv -T cfarm-ci "REMOTE_WORK=$remote_work SOURCE_REPO=$SOURCE_REPO SOURCE_SHA=$SOURCE_SHA CFARM_CC=\"$CFARM_CC\" CFARM_MAKE=\"$CFARM_MAKE\" CFARM_EXTRA_CFLAGS=\"$CFARM_EXTRA_CFLAGS\" CFARM_SHELL=\"$CFARM_SHELL\" CFARM_TEST_SCRIPT=\"$CFARM_TEST_SCRIPT\" PATH=\"$CFARM_PATH\" \"$CFARM_SHELL\" -s" <<'EOF'
+          set -eux
+          cd "$HOME/$REMOTE_WORK"
+          git init
+          git remote add origin "$SOURCE_REPO"
+          git fetch --depth 1 origin "$SOURCE_SHA"
+          git -c advice.detachedHead=false checkout --detach FETCH_HEAD
+          CC="$CFARM_CC" MAKE="$CFARM_MAKE" EXTRA_CFLAGS="$CFARM_EXTRA_CFLAGS" "$CFARM_SHELL" "$CFARM_TEST_SCRIPT"
+          EOF
 
-      - name: Build and test on compile farm host
-        if: steps.cfarm-secrets.outputs.available == 'true'
-        shell: bash
-        run: |
-          ssh cfarm-ci "cd \"$REMOTE_WORK\" && PATH=\"$CFARM_PATH\" CC=\"$CFARM_CC\" MAKE=\"$CFARM_MAKE\" EXTRA_CFLAGS=\"$CFARM_EXTRA_CFLAGS\" \"$CFARM_SHELL\" \"$CFARM_TEST_SCRIPT\""
+          echo "$(timestamp) done diagnostics"
 
       - name: Clean remote workspace
         if: always() && steps.cfarm-secrets.outputs.available == 'true'
         continue-on-error: true
         shell: bash
         run: |
+          if [[ -n "${REMOTE_DEBUG_LOG:-}" ]]; then
+            echo "Remote debug log:"
+            timeout 20s ssh -T cfarm-ci "cat \"$REMOTE_DEBUG_LOG\" 2>/dev/null || true"
+          fi
           if [[ -n "${REMOTE_WORK:-}" ]]; then
-            ssh cfarm-ci "/usr/bin/rm -rf \"$REMOTE_WORK\""
+            timeout 20s ssh -T cfarm-ci "if [ -f \"$REMOTE_WORK/watchdog.pid\" ]; then kill \$(cat \"$REMOTE_WORK/watchdog.pid\") 2>/dev/null || true; fi; rm -rf \"$REMOTE_WORK\""
+          fi
+          if [[ -n "${REMOTE_DEBUG_LOG:-}" ]]; then
+            timeout 20s ssh -T cfarm-ci "rm -f \"$REMOTE_DEBUG_LOG\""
           fi

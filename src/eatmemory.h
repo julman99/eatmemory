@@ -18,6 +18,14 @@
     #define SYSMEM_MODE_AIX
 #elif defined(__sun)
     #define SYSMEM_MODE_SOLARIS
+#elif defined(__DragonFly__)
+    #define SYSMEM_MODE_DRAGONFLY
+#elif defined(__FreeBSD__)
+    #define SYSMEM_MODE_FREEBSD
+#elif defined(__OpenBSD__)
+    #define SYSMEM_MODE_OPENBSD
+#elif defined(__NetBSD__)
+    #define SYSMEM_MODE_NETBSD
 #elif defined(__linux__)
     #define SYSMEM_MODE_LINUX
 #else

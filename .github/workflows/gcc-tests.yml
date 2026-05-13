@@ -1,9 +1,8 @@
 name: GCC Version Tests
 
 on:
+  workflow_dispatch:
   push:
-    branches: [ main, master, v* ]
-  pull_request:
     branches: [ main, master, v* ]
 
 concurrency:
@@ -31,4 +30,4 @@ jobs:
     - name: Test GCC ${{ matrix.gcc_version }} on ${{ matrix.runner }}
       run: |
         echo "Testing GCC ${{ matrix.gcc_version }} on ${{ matrix.runner }}"
-        docker run -i -v "$PWD:/src" --rm gcc:${{ matrix.gcc_version }} bash -c "cd /src && make clean && make && output/eatmemory 100M -t 0" 
+        docker run -i -v "$PWD:/src" --rm gcc:${{ matrix.gcc_version }} bash -c "cd /src && make clean && make && output/eatmemory 100M -t 0"
