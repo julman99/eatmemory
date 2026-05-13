@@ -14,6 +14,8 @@
     #define SYSMEM_MODE_APPLE
 #elif defined(_WIN32) || defined(_WIN64)
     #define SYSMEM_MODE_WINDOWS
+#elif defined(_AIX)
+    #define SYSMEM_MODE_AIX
 #elif defined(__linux__)
     #define SYSMEM_MODE_LINUX
 #else
