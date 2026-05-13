@@ -131,7 +131,7 @@ static Vec* vec_new() {
 }
 
 
-static void vec_free(Vec* vec) {
+static void vec_destroy(Vec* vec) {
     if (vec) {
         free(vec->entries);
         free(vec);
@@ -715,7 +715,7 @@ void ap_free(ArgParser* parser) {
         for (int i = 0; i < parser->option_vec->count; i++) {
             option_free(parser->option_vec->entries[i]);
         }
-        vec_free(parser->option_vec);
+        vec_destroy(parser->option_vec);
     }
 
     if (parser->command_map) {
@@ -726,11 +726,11 @@ void ap_free(ArgParser* parser) {
         for (int i = 0; i < parser->command_vec->count; i++) {
             ap_free(parser->command_vec->entries[i]);
         }
-        vec_free(parser->command_vec);
+        vec_destroy(parser->command_vec);
     }
 
     if (parser->positional_args) {
-        vec_free(parser->positional_args);
+        vec_destroy(parser->positional_args);
     }
 
     free(parser);
