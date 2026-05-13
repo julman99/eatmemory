@@ -21,6 +21,15 @@ jobs:
             host: cfarm119.cfarm.net
             host_key: cfarm119.cfarm.net ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIB3/qHMdOGpZ8DD5E8J7falo8IDJ962oGsgSycuHXXRO
             cc: /opt/freeware/bin/gcc
+            extra_cflags: ""
+            shell: /opt/freeware/bin/bash
+            path: /opt/freeware/bin:/usr/bin:/bin
+            test_script: test/simple.test.sh
+          - name: aix-64
+            host: cfarm119.cfarm.net
+            host_key: cfarm119.cfarm.net ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIB3/qHMdOGpZ8DD5E8J7falo8IDJ962oGsgSycuHXXRO
+            cc: /opt/freeware/bin/gcc
+            extra_cflags: -maix64
             shell: /opt/freeware/bin/bash
             path: /opt/freeware/bin:/usr/bin:/bin
             test_script: test/simple.test.sh
@@ -34,6 +43,7 @@ jobs:
       CFARM_HOST: ${{ matrix.host }}
       CFARM_HOST_KEY: ${{ matrix.host_key }}
       CFARM_CC: ${{ matrix.cc }}
+      CFARM_EXTRA_CFLAGS: ${{ matrix.extra_cflags }}
       CFARM_SHELL: ${{ matrix.shell }}
       CFARM_PATH: ${{ matrix.path }}
       CFARM_TEST_SCRIPT: ${{ matrix.test_script }}
@@ -124,7 +134,7 @@ jobs:
         if: steps.cfarm-secrets.outputs.available == 'true'
         shell: bash
         run: |
-          ssh cfarm-ci "cd \"$REMOTE_WORK\" && PATH=\"$CFARM_PATH\" CC=\"$CFARM_CC\" \"$CFARM_SHELL\" \"$CFARM_TEST_SCRIPT\""
+          ssh cfarm-ci "cd \"$REMOTE_WORK\" && PATH=\"$CFARM_PATH\" CC=\"$CFARM_CC\" EXTRA_CFLAGS=\"$CFARM_EXTRA_CFLAGS\" \"$CFARM_SHELL\" \"$CFARM_TEST_SCRIPT\""
 
       - name: Clean remote workspace
         if: always() && steps.cfarm-secrets.outputs.available == 'true'
