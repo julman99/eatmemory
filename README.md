@@ -85,7 +85,7 @@ Size accepts a unit suffix:
 | `eatmemory 100K` | 100 kilobytes                      |
 | `eatmemory 10M`  | 10 megabytes                       |
 | `eatmemory 4G`   | 4 gigabytes                        |
-| `eatmemory 80%`  | 80 % of currently available memory |
+| `eatmemory 80%`  | 80 % of currently available memory, when supported by the backend |
 
 ### Options
 
@@ -93,6 +93,7 @@ Size accepts a unit suffix:
 | ----------------- | ---------------------------------------------------------- |
 | `-t <seconds>`    | Exit automatically after the given number of seconds.      |
 | `-s <chunk-size>` | Allocate in chunks of this size (same format as `<size>`). |
+| `-l`, `--lock-memory` | Lock allocated pages in physical memory, when supported. |
 | `-h`, `--help`    | Show usage and exit.                                       |
 
 ### Exit codes
@@ -104,6 +105,8 @@ Size accepts a unit suffix:
 | `11` | Invalid `<chunk-size>` argument.                 |
 | `20` | Could not allocate the requested memory.         |
 | `21` | Memory verification failed (read-back mismatch). |
+| `22` | Memory locking is not supported by the backend.  |
+| `23` | Could not lock the allocated memory.             |
 
 ## Docker
 

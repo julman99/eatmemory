@@ -53,5 +53,9 @@ run_success "Explicit plus in size argument" \
     "Eating 1K in chunks of 100 bytes..." \
     "+1K" -t 0
 
+run_success "Lock option is shown in help" \
+    "-l, --lock-memory" \
+    "-?"
+
 echo ""
 echo "Allocation CLI tests passed"
