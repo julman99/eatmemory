@@ -15,6 +15,33 @@ readonly UNDER_1MB_BYTES=$((ONE_MB_BYTES - 1))          # 1048575
 readonly OVER_1MB_BYTES=$((ONE_MB_BYTES + 1))           # 1048577
 readonly LARGE_TEST_SIZE="100M"                         # Comfortably above 1 MB
 
+detect_expected_backend() {
+    local uname_s
+    uname_s="$(uname -s 2>/dev/null || true)"
+
+    case "$uname_s" in
+        Linux*)
+            echo "Linux"
+            ;;
+        Darwin*)
+            echo "Darwin"
+            ;;
+        AIX*)
+            echo "AIX"
+            ;;
+        SunOS*)
+            echo "SunOS"
+            ;;
+        MINGW*|MSYS*|CYGWIN*)
+            echo "Windows"
+            ;;
+        *)
+            echo "ERROR: unable to detect expected backend from uname -s: $uname_s" >&2
+            return 1
+            ;;
+    esac
+}
+
 echo "eatmemory sanity tests - 1 MB boundary coverage plus error paths"
 echo "================================================================="
 
@@ -37,6 +64,21 @@ if [[ ! -f "output/eatmemory" ]]; then
     echo "ERROR: eatmemory executable not found at output/eatmemory"
     exit 1
 fi
+
+expected_backend="$(detect_expected_backend)"
+help_first_line="$(./output/eatmemory -? | sed -n '1p')"
+expected_help_suffix=" - https://github.com/julman99/eatmemory - ${expected_backend}"
+
+echo ""
+echo "Backend detection check:"
+echo "Expected backend: $expected_backend"
+echo "Help first line:  $help_first_line"
+if [[ "$help_first_line" != *"$expected_help_suffix" ]]; then
+    echo "ERROR: expected help output to include backend '$expected_backend'"
+    echo "Actual first help line: $help_first_line"
+    exit 1
+fi
+echo "✓ Backend detection confirmed"
 
 # Helper function to run a test case that should succeed (exit 0).
 run_test() {

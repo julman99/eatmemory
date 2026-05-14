@@ -10,21 +10,6 @@
 #define TO_MB (1024UL * TO_KB)
 #define TO_GB (1024UL * TO_MB)
 
-#ifdef __APPLE__
-    #define SYSMEM_MODE_APPLE
-#elif defined(_WIN32) || defined(_WIN64)
-    #define SYSMEM_MODE_WINDOWS
-#elif defined(_AIX)
-    #define SYSMEM_MODE_AIX
-#elif defined(__sun)
-    #define SYSMEM_MODE_SOLARIS
-#elif defined(__linux__)
-    #define SYSMEM_MODE_LINUX
-#else
-    #define SYSMEM_MODE_UNKNOWN
-#endif
-
-
 struct system_memory_stats {
     bool supported;
     size_t total;

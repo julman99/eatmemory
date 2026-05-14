@@ -78,10 +78,6 @@ size_t string_to_bytes(char * str, eatmemory_error* error) {
         } else if (unit == 'G') {
             numerator = TO_GB;
         } else if (unit == '%') {
-#ifdef SYSMEM_MODE_UNKNOWN
-            *error = EM_ERROR_PARSE_INVALID_UNIT;
-            return 0;
-#else
             struct system_memory_stats memory_stats;
             get_system_memory_stats(&memory_stats);
             if (!memory_stats.supported) {
@@ -90,7 +86,6 @@ size_t string_to_bytes(char * str, eatmemory_error* error) {
             }
             numerator = memory_stats.free;
             denominator = 100;
-#endif
         } else {
             *error = EM_ERROR_PARSE_INVALID_UNIT;
             return 0;

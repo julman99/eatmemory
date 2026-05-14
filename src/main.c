@@ -20,6 +20,10 @@
 #include <unistd.h>
 #include "errors.h"
 
+#ifndef SYSMEM_BACKEND
+#define SYSMEM_BACKEND "Unkown OS"
+#endif
+
 ArgParser* configure_cmd() {
     ArgParser* parser = ap_new_parser();
     ap_add_flag(parser, "help h ?");
@@ -29,15 +33,17 @@ ArgParser* configure_cmd() {
 }
 
 void print_help() {
-    printf("eatmemory %s - %s\n\n", VERSION, "https://github.com/julman99/eatmemory");
+    printf("eatmemory %s - %s - %s\n\n", VERSION, "https://github.com/julman99/eatmemory", SYSMEM_BACKEND);
     printf("Usage: eatmemory [-t <seconds>] <size>\n");
     printf("Size can be specified in megabytes or gigabytes in the following way:\n");
     printf("#                # Bytes      example: 1024\n");
     printf("#M               # Megabytes  example: 15M\n");
     printf("#G               # Gigabytes  example: 2G\n");
-#ifndef SYSMEM_MODE_UNKNOWN
-    printf("#%%               # Percent    example: 50%%\n");
-#endif
+    struct system_memory_stats memory_stats;
+    get_system_memory_stats(&memory_stats);
+    if (memory_stats.supported) {
+        printf("#%%               # Percent    example: 50%%\n");
+    }
     printf("\n");
     printf("Options:\n");
     printf("-t <seconds>     Exit after specified number of seconds.\n");
@@ -119,4 +125,3 @@ int main(int argc, char *argv[]){
     }
     digest(eaten);
 }
-
