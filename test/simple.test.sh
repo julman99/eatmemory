@@ -69,11 +69,16 @@ expected_backend="$(detect_expected_backend)"
 help_first_line="$(./output/eatmemory -? | sed -n '1p')"
 expected_help_suffix=" - https://github.com/julman99/eatmemory - ${expected_backend}"
 
+echo ""
+echo "Backend detection check:"
+echo "Expected backend: $expected_backend"
+echo "Help first line:  $help_first_line"
 if [[ "$help_first_line" != *"$expected_help_suffix" ]]; then
     echo "ERROR: expected help output to include backend '$expected_backend'"
     echo "Actual first help line: $help_first_line"
     exit 1
 fi
+echo "✓ Backend detection confirmed"
 
 # Helper function to run a test case that should succeed (exit 0).
 run_test() {
