@@ -29,8 +29,6 @@ ifneq ($(findstring __APPLE__,$(CC_TARGET_MACROS)),)
     CC_TARGET_OS := Darwin
 else ifneq ($(findstring _WIN32,$(CC_TARGET_MACROS)),)
     CC_TARGET_OS := Windows
-else ifneq ($(findstring _WIN64,$(CC_TARGET_MACROS)),)
-    CC_TARGET_OS := Windows
 else ifneq ($(findstring _AIX,$(CC_TARGET_MACROS)),)
     CC_TARGET_OS := AIX
 else ifneq ($(findstring __sun,$(CC_TARGET_MACROS)),)
