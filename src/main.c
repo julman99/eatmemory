@@ -37,12 +37,13 @@ ArgParser* configure_cmd(const struct eatmemory_backend* backend) {
 
 void print_memory_summary(const struct eatmemory_backend* backend) {
     struct system_memory_stats memory_stats = {0};
+    bool memory_stats_available = false;
     if (backend->memory_stats_supported) {
-        eatmemory_get_system_memory_stats(&memory_stats);
+        memory_stats_available = eatmemory_get_system_memory_stats(&memory_stats) == EM_STATS_OK;
     }
 
-    printf("Total memory:     %s\n", backend->memory_stats_supported ? bytes_to_string(memory_stats.total, BYTES_TMP_STR()) : STR_NA);
-    printf("Available memory: %s\n", backend->memory_stats_supported ? bytes_to_string(memory_stats.free, BYTES_TMP_STR()) : STR_NA);
+    printf("Total memory:     %s\n", memory_stats_available ? bytes_to_string(memory_stats.total, BYTES_TMP_STR()) : STR_NA);
+    printf("Available memory: %s\n", memory_stats_available ? bytes_to_string(memory_stats.free, BYTES_TMP_STR()) : STR_NA);
 }
 
 void print_help(const struct eatmemory_backend* backend) {
@@ -82,7 +83,7 @@ void print_and_exit_if_error(eatmemory_error if_error, char * error_message, eat
 
 int main(int argc, char *argv[]){
     struct eatmemory_backend backend;
-    eatmemory_init(&backend);
+    eatmemory_get_backend_capabilities(&backend);
 
     ArgParser* parser = configure_cmd(&backend);
     ap_parse(parser, argc, argv);

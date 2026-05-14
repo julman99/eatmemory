@@ -26,9 +26,15 @@ enum eatmemory_lock_result {
     EM_LOCK_FAILED = 2
 };
 
+enum eatmemory_stats_result {
+    EM_STATS_OK = 0,
+    EM_STATS_UNSUPPORTED = 1,
+    EM_STATS_FAILED = 2
+};
+
 //system memory stats
-void eatmemory_init(struct eatmemory_backend* backend);
-void eatmemory_get_system_memory_stats(struct system_memory_stats* stats);
+void eatmemory_get_backend_capabilities(struct eatmemory_backend* backend);
+enum eatmemory_stats_result eatmemory_get_system_memory_stats(struct system_memory_stats* stats);
 enum eatmemory_lock_result eatmemory_lock_region(void *ptr, size_t size);
 void eatmemory_unlock_region(void *ptr, size_t size);
 

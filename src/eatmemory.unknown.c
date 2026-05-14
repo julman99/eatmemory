@@ -1,13 +1,15 @@
 #include "eatmemory.h"
 
-void eatmemory_init(struct eatmemory_backend* backend) {
+void eatmemory_get_backend_capabilities(struct eatmemory_backend* backend) {
     backend->memory_stats_supported = false;
     backend->memory_lock_supported = false;
 }
 
-void eatmemory_get_system_memory_stats(struct system_memory_stats* stats) {
+enum eatmemory_stats_result eatmemory_get_system_memory_stats(struct system_memory_stats* stats) {
     stats->total = 0;
     stats->free = 0;
+
+    return EM_STATS_UNSUPPORTED;
 }
 
 enum eatmemory_lock_result eatmemory_lock_region(void *ptr, size_t size) {

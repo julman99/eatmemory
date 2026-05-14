@@ -6,12 +6,12 @@ static size_t pages_to_bytes_clamped(long pages, long page_size) {
     return bytes > SIZE_MAX ? SIZE_MAX : (size_t)bytes;
 }
 
-void eatmemory_init(struct eatmemory_backend* backend) {
+void eatmemory_get_backend_capabilities(struct eatmemory_backend* backend) {
     backend->memory_stats_supported = true;
     backend->memory_lock_supported = true;
 }
 
-void eatmemory_get_system_memory_stats(struct system_memory_stats* stats) {
+enum eatmemory_stats_result eatmemory_get_system_memory_stats(struct system_memory_stats* stats) {
     stats->total = 0;
     stats->free = 0;
 
@@ -22,7 +22,10 @@ void eatmemory_get_system_memory_stats(struct system_memory_stats* stats) {
     if (pages > 0 && page_size > 0 && free_pages > 0) {
         stats->total = pages_to_bytes_clamped(pages, page_size);
         stats->free = pages_to_bytes_clamped(free_pages, page_size);
+        return EM_STATS_OK;
     }
+
+    return EM_STATS_FAILED;
 }
 
 #include "eatmemory.posix-common.c"

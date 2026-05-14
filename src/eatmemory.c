@@ -97,14 +97,17 @@ size_t string_to_bytes(char * str, eatmemory_error* error) {
             numerator = TO_GB;
         } else if (unit == '%') {
             struct eatmemory_backend backend;
-            eatmemory_init(&backend);
+            eatmemory_get_backend_capabilities(&backend);
             if (!backend.memory_stats_supported) {
                 *error = EM_ERROR_PARSE_INVALID_UNIT;
                 return 0;
             }
 
             struct system_memory_stats memory_stats;
-            eatmemory_get_system_memory_stats(&memory_stats);
+            if (eatmemory_get_system_memory_stats(&memory_stats) != EM_STATS_OK) {
+                *error = EM_ERROR_PARSE_INVALID_UNIT;
+                return 0;
+            }
             numerator = memory_stats.free;
             denominator = 100;
         } else {

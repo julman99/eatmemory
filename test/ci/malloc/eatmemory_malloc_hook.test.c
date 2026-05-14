@@ -21,6 +21,7 @@ static size_t lock_sizes[MAX_ALLOC_CALLS];
 static size_t unlock_sizes[MAX_ALLOC_CALLS];
 static void *lock_ptrs[MAX_ALLOC_CALLS];
 static void *unlock_ptrs[MAX_ALLOC_CALLS];
+static enum eatmemory_stats_result forced_stats_result = EM_STATS_OK;
 static enum eatmemory_lock_result forced_lock_result = EM_LOCK_OK;
 
 #define CHECK(condition) do { \
@@ -40,12 +41,14 @@ static enum eatmemory_lock_result forced_lock_result = EM_LOCK_OK;
     } \
 } while (0)
 
-void eatmemory_get_system_memory_stats(struct system_memory_stats* stats) {
+enum eatmemory_stats_result eatmemory_get_system_memory_stats(struct system_memory_stats* stats) {
     stats->total = 1024UL * 1024UL * 1024UL;
     stats->free = 512UL * 1024UL * 1024UL;
+
+    return forced_stats_result;
 }
 
-void eatmemory_init(struct eatmemory_backend* backend) {
+void eatmemory_get_backend_capabilities(struct eatmemory_backend* backend) {
     backend->memory_stats_supported = true;
     backend->memory_lock_supported = true;
 }
@@ -119,6 +122,7 @@ static void reset_allocator(void) {
     lock_call_count = 0;
     unlock_call_count = 0;
     fail_lock_call = 0;
+    forced_stats_result = EM_STATS_OK;
     forced_lock_result = EM_LOCK_OK;
     memset(malloc_sizes, 0, sizeof(malloc_sizes));
     memset(malloc_ptrs, 0, sizeof(malloc_ptrs));
@@ -195,6 +199,27 @@ static void test_chunk_size_helper(void) {
     CHECK_SIZE(get_chunk_size(4097, 1024, 5), 0);
     CHECK_SIZE(get_chunk_size(4097, 0, 0), 0);
     CHECK_SIZE(get_chunk_size(0, 1024, 0), 0);
+}
+
+static void test_percent_size_uses_available_memory(void) {
+    reset_allocator();
+
+    eatmemory_error error = EM_ERROR_NONE;
+    size_t bytes = string_to_bytes("50%", &error);
+
+    CHECK(error == EM_ERROR_NONE);
+    CHECK_SIZE(bytes, 256UL * 1024UL * 1024UL);
+}
+
+static void test_percent_size_rejects_stats_failure(void) {
+    reset_allocator();
+    forced_stats_result = EM_STATS_FAILED;
+
+    eatmemory_error error = EM_ERROR_NONE;
+    size_t bytes = string_to_bytes("50%", &error);
+
+    CHECK(error == EM_ERROR_PARSE_INVALID_UNIT);
+    CHECK_SIZE(bytes, 0);
 }
 
 static void test_zero_chunk_size(void) {
@@ -449,6 +474,8 @@ static void test_lock_memory_unsupported_cleans_up(void) {
 
 int main(void) {
     test_chunk_size_helper();
+    test_percent_size_uses_available_memory();
+    test_percent_size_rejects_stats_failure();
     test_zero_chunk_size();
     test_one_exact_chunk();
     test_multiple_exact_chunks();
