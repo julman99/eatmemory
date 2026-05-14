@@ -15,6 +15,7 @@ mkdir -p output
     -std=c99 \
     -O2 \
     -g \
+    ${EXTRA_CFLAGS:-} \
     -DEATMEMORY_MALLOC=test_malloc \
     -DEATMEMORY_FREE=test_free \
     -Isrc \
