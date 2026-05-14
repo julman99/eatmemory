@@ -81,6 +81,14 @@ void print_and_exit_if_error(eatmemory_error if_error, char * error_message, eat
     }
 }
 
+static bool output_is_terminal(void) {
+    return isatty(fileno(stdout));
+}
+
+static bool can_prompt_for_enter(void) {
+    return isatty(fileno(stdin)) && output_is_terminal();
+}
+
 struct terminal_progress {
     bool active;
     enum eatmemory_progress_stage stage;
@@ -177,7 +185,7 @@ int main(int argc, char *argv[]){
 
     ap_free(parser);
 
-    bool show_progress = isatty(fileno(stdout));
+    bool show_progress = output_is_terminal();
 
     print_memory_summary(&backend);
     printf("\n");
@@ -204,7 +212,7 @@ int main(int argc, char *argv[]){
     }
 
     if(eaten.chunks){
-        if(timeout < 0 && isatty(fileno(stdin))) {
+        if(timeout < 0 && can_prompt_for_enter()) {
             printf("Done, press ENTER to free the memory\n");
             getchar();
         } else if (timeout >= 0) {
