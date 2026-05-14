@@ -29,6 +29,8 @@ ifneq ($(findstring __APPLE__,$(CC_TARGET_MACROS)),)
     CC_TARGET_OS := Darwin
 else ifneq ($(findstring _WIN32,$(CC_TARGET_MACROS)),)
     CC_TARGET_OS := Windows
+else ifneq ($(findstring __CYGWIN__,$(CC_TARGET_MACROS)),)
+    CC_TARGET_OS := CYGWIN
 else ifneq ($(findstring _AIX,$(CC_TARGET_MACROS)),)
     CC_TARGET_OS := AIX
 else ifneq ($(findstring __sun,$(CC_TARGET_MACROS)),)
@@ -62,7 +64,7 @@ ifndef SYS_SRC
     else ifeq ($(SYS_OS),Darwin)
         SYS_SRC := $(SRC_DIR)/eatmemory.apple.c
         SYS_BACKEND := Darwin
-    else ifneq ($(filter Windows MINGW% MSYS%,$(SYS_OS)),)
+    else ifneq ($(filter Windows MINGW% MSYS% CYGWIN%,$(SYS_OS)),)
         SYS_SRC := $(SRC_DIR)/eatmemory.windows.c
         SYS_BACKEND := Windows
     else
@@ -125,7 +127,7 @@ help:
 	@echo "  clean         - Remove generated files"
 	@echo "  help          - Display this help message"
 	@echo "Variables:"
-	@echo "  SYS_OS        - Override backend auto-detection (Linux, Darwin, AIX, SunOS, Windows, Unknown)"
+	@echo "  SYS_OS        - Override backend auto-detection (Linux, Darwin, AIX, SunOS, Windows, CYGWIN*, Unknown)"
 	@echo "  SYS_SRC       - Override the backend source file directly"
 
 .PHONY: all install clean help

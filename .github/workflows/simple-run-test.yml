@@ -23,12 +23,17 @@ jobs:
           - { os: ubuntu-24.04-arm }
           - { os: ubuntu-22.04-arm }
           - { os: macos-latest }
-          - { os: windows-latest }
-          - { os: windows-11-arm }
+          - { os: windows-latest, windows_env: msys2 }
+          - { os: windows-latest, windows_env: cygwin }
+          - { os: windows-11-arm, windows_env: msys2 }
 
     runs-on: ${{ matrix.os }}
 
     steps:
+      - name: Use LF line endings for Cygwin
+        if: runner.os == 'Windows' && matrix.windows_env == 'cygwin'
+        run: git config --global core.autocrlf input
+
       - name: Checkout code
         uses: actions/checkout@v6
 
@@ -45,7 +50,7 @@ jobs:
           which make
 
       - name: Setup MSYS2 (Windows)
-        if: runner.os == 'Windows'
+        if: runner.os == 'Windows' && matrix.windows_env == 'msys2'
         uses: msys2/setup-msys2@v2
         with:
           msystem: UCRT64
@@ -56,13 +61,26 @@ jobs:
             make
             bash
 
+      - name: Setup Cygwin (Windows)
+        if: runner.os == 'Windows' && matrix.windows_env == 'cygwin'
+        uses: cygwin/cygwin-install-action@v6
+        with:
+          packages: |
+            gcc-core
+            git
+            make
+
       - name: Run simple test (Unix)
         if: runner.os != 'Windows'
         env:
           EXTRA_CFLAGS: ${{ matrix.extra_cflags }}
         run: bash test/simple.test.sh
 
-      - name: Run simple test (Windows)
-        if: runner.os == 'Windows'
+      - name: Run simple test (MSYS2)
+        if: runner.os == 'Windows' && matrix.windows_env == 'msys2'
         shell: msys2 {0}
+        run: bash test/simple.test.sh
+
+      - name: Run simple test (Cygwin)
+        if: runner.os == 'Windows' && matrix.windows_env == 'cygwin'
         run: bash test/simple.test.sh
