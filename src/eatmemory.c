@@ -197,27 +197,15 @@ static inline uint8_t eatmemory_pattern(size_t chunk_index, size_t byte_offset, 
     return (uint8_t)((chunk_index + byte_offset) ^ total);
 }
 
-static void print_progress(bool show_progress, const char *label, size_t completed, size_t total) {
-    if (!show_progress) {
+static void report_progress(const struct eatmemory_progress *progress, enum eatmemory_progress_stage stage, size_t completed, size_t total) {
+    if (progress == NULL || progress->callback == NULL) {
         return;
     }
 
-    size_t percent = 100;
-    if (total > 0 && completed < total) {
-        percent = (size_t)(((long double)completed / (long double)total) * 100.0L);
-    }
-
-    printf("\r%s: %3zu%%", label, percent);
-    fflush(stdout);
+    progress->callback(stage, completed, total, progress->context);
 }
 
-static void finish_progress(bool show_progress) {
-    if (show_progress) {
-        printf("\n");
-    }
-}
-
-struct allocation eat(size_t total, size_t chunk_size, bool lock_memory, bool show_progress, eatmemory_error* error) {
+struct allocation eat(size_t total, size_t chunk_size, bool lock_memory, const struct eatmemory_progress *progress, eatmemory_error* error) {
     struct allocation result = { NULL, 0, total, chunk_size, 0 };
     *error = EM_ERROR_NONE;
 
@@ -253,13 +241,12 @@ struct allocation eat(size_t total, size_t chunk_size, bool lock_memory, bool sh
     // byte. The pattern is computed per-byte so the compiler cannot collapse
     // the write loop into a memset or constant store.
     size_t eaten = 0;
-    print_progress(show_progress, "Eating memory", 0, total);
+    report_progress(progress, EM_PROGRESS_EATING, 0, total);
     for(size_t i=0; i<iterations; i++){
         size_t allocate = get_chunk_size(total, chunk_size, i);
         uint8_t *buffer = EATMEMORY_MALLOC(sizeof(uint8_t) * allocate);
         if(buffer == NULL){
-            finish_progress(show_progress);
-            digest(result, false);
+            digest(result, NULL);
             *error = EM_ERROR_CANNOT_ALLOCATE_MEMORY;
             result.chunks = NULL;
             result.count = 0;
@@ -269,16 +256,14 @@ struct allocation eat(size_t total, size_t chunk_size, bool lock_memory, bool sh
         if (lock_memory) {
             enum eatmemory_lock_result lock_result = eatmemory_lock_region(buffer, allocate);
             if (lock_result == EM_LOCK_UNSUPPORTED) {
-                finish_progress(show_progress);
-                digest(result, false);
+                digest(result, NULL);
                 *error = EM_ERROR_MEMORY_LOCK_UNSUPPORTED;
                 result.chunks = NULL;
                 result.count = 0;
                 result.locked_count = 0;
                 return result;
             } else if (lock_result != EM_LOCK_OK) {
-                finish_progress(show_progress);
-                digest(result, false);
+                digest(result, NULL);
                 *error = EM_ERROR_CANNOT_LOCK_MEMORY;
                 result.chunks = NULL;
                 result.count = 0;
@@ -291,9 +276,8 @@ struct allocation eat(size_t total, size_t chunk_size, bool lock_memory, bool sh
             buffer[j] = eatmemory_pattern(i, j, total);
         }
         eaten += allocate;
-        print_progress(show_progress, "Eating memory", eaten, total);
+        report_progress(progress, EM_PROGRESS_EATING, eaten, total);
     }
-    finish_progress(show_progress);
 
     // Verify every byte was actually written and the writes survived
     // optimization. Defense in depth against optimizers eliding the writes:
@@ -312,7 +296,7 @@ struct allocation eat(size_t total, size_t chunk_size, bool lock_memory, bool sh
     // optimizer elide writes to bytes we do not inspect; we want full trust.
     uint64_t diff_acc = 0;
     size_t verified = 0;
-    print_progress(show_progress, "Verifying memory", 0, total);
+    report_progress(progress, EM_PROGRESS_VERIFYING, 0, total);
     for(size_t i=0; i<iterations; i++) {
         size_t allocate = get_chunk_size(total, chunk_size, i);
         volatile uint8_t* p = (volatile uint8_t*)allocations[i];
@@ -322,12 +306,11 @@ struct allocation eat(size_t total, size_t chunk_size, bool lock_memory, bool sh
             diff_acc |= (uint64_t)(got ^ expected);
         }
         verified += allocate;
-        print_progress(show_progress, "Verifying memory", verified, total);
+        report_progress(progress, EM_PROGRESS_VERIFYING, verified, total);
     }
-    finish_progress(show_progress);
 
     if(diff_acc != 0) {
-        digest(result, false);
+        digest(result, NULL);
         *error = EM_ERROR_MEMORY_VERIFICATION_FAILED;
         result.chunks = NULL;
         result.count = 0;
@@ -337,13 +320,13 @@ struct allocation eat(size_t total, size_t chunk_size, bool lock_memory, bool sh
     return result;
 }
 
-void digest(struct allocation alloc, bool show_progress) {
+void digest(struct allocation alloc, const struct eatmemory_progress *progress) {
     if(alloc.chunks == NULL) {
         return;
     }
 
     size_t freed = 0;
-    print_progress(show_progress, "Freeing memory", 0, alloc.total);
+    report_progress(progress, EM_PROGRESS_FREEING, 0, alloc.total);
     for(size_t i=0; i < alloc.count; i++){
         if(alloc.chunks[i] != NULL) {
             size_t allocate = get_chunk_size(alloc.total, alloc.chunk_size, i);
@@ -352,9 +335,8 @@ void digest(struct allocation alloc, bool show_progress) {
             }
             EATMEMORY_FREE(alloc.chunks[i]);
             freed += allocate;
-            print_progress(show_progress, "Freeing memory", freed, alloc.total);
+            report_progress(progress, EM_PROGRESS_FREEING, freed, alloc.total);
         }
     }
-    finish_progress(show_progress);
     EATMEMORY_FREE(alloc.chunks);
 }

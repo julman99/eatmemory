@@ -32,6 +32,23 @@ enum eatmemory_stats_result {
     EM_STATS_FAILED = 2
 };
 
+enum eatmemory_progress_stage {
+    EM_PROGRESS_EATING = 0,
+    EM_PROGRESS_VERIFYING = 1,
+    EM_PROGRESS_FREEING = 2
+};
+
+typedef void (*eatmemory_progress_callback)(
+    enum eatmemory_progress_stage stage,
+    size_t completed,
+    size_t total,
+    void *context);
+
+struct eatmemory_progress {
+    eatmemory_progress_callback callback;
+    void *context;
+};
+
 //system memory stats
 void eatmemory_get_backend_capabilities(struct eatmemory_backend* backend);
 enum eatmemory_stats_result eatmemory_get_system_memory_stats(struct system_memory_stats* stats);
@@ -58,6 +75,6 @@ struct allocation {
 
 size_t get_auto_chunk_size(size_t bytes);
 size_t get_chunk_size(size_t total, size_t chunk_size, size_t chunk_index);
-struct allocation eat(size_t total, size_t chunk_size, bool lock_memory, bool show_progress, eatmemory_error* error);
-void digest(struct allocation alloc, bool show_progress);
+struct allocation eat(size_t total, size_t chunk_size, bool lock_memory, const struct eatmemory_progress *progress, eatmemory_error* error);
+void digest(struct allocation alloc, const struct eatmemory_progress *progress);
 #endif

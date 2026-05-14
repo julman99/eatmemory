@@ -81,6 +81,70 @@ void print_and_exit_if_error(eatmemory_error if_error, char * error_message, eat
     }
 }
 
+struct terminal_progress {
+    bool active;
+    enum eatmemory_progress_stage stage;
+    size_t last_percent;
+};
+
+static const char *progress_stage_label(enum eatmemory_progress_stage stage) {
+    switch (stage) {
+        case EM_PROGRESS_EATING:
+            return "Eating memory";
+        case EM_PROGRESS_VERIFYING:
+            return "Verifying memory";
+        case EM_PROGRESS_FREEING:
+            return "Freeing memory";
+    }
+
+    return "Working";
+}
+
+static size_t progress_percent(size_t completed, size_t total) {
+    if (total == 0 || completed >= total) {
+        return 100;
+    }
+
+    return (size_t)(((long double)completed / (long double)total) * 100.0L);
+}
+
+static void terminal_progress_finish(struct terminal_progress *progress) {
+    if (!progress->active) {
+        return;
+    }
+
+    printf("\n");
+    fflush(stdout);
+    progress->active = false;
+}
+
+static void terminal_progress_callback(enum eatmemory_progress_stage stage, size_t completed, size_t total, void *context) {
+    struct terminal_progress *progress = context;
+    size_t percent = progress_percent(completed, total);
+
+    if (progress->active && progress->stage != stage) {
+        terminal_progress_finish(progress);
+    }
+
+    if (!progress->active) {
+        progress->active = true;
+        progress->stage = stage;
+        progress->last_percent = SIZE_MAX;
+    }
+
+    if (progress->last_percent == percent && completed < total) {
+        return;
+    }
+
+    printf("\r%s: %3zu%%", progress_stage_label(stage), percent);
+    fflush(stdout);
+    progress->last_percent = percent;
+
+    if (completed >= total) {
+        terminal_progress_finish(progress);
+    }
+}
+
 int main(int argc, char *argv[]){
     struct eatmemory_backend backend;
     eatmemory_get_backend_capabilities(&backend);
@@ -121,7 +185,11 @@ int main(int argc, char *argv[]){
     printf("Eating %s in chunks of %s...\n", bytes_to_string(size, BYTES_TMP_STR()), bytes_to_string(chunk_size, BYTES_TMP_STR()));
 
     eatmemory_error eat_error = EM_ERROR_NONE;
-    struct allocation eaten = eat(size, chunk_size, lock_memory, show_progress, &eat_error);
+    struct terminal_progress terminal_progress = { false, EM_PROGRESS_EATING, SIZE_MAX };
+    struct eatmemory_progress progress = { terminal_progress_callback, &terminal_progress };
+    const struct eatmemory_progress *progress_events = show_progress ? &progress : NULL;
+    struct allocation eaten = eat(size, chunk_size, lock_memory, progress_events, &eat_error);
+    terminal_progress_finish(&terminal_progress);
 
     if(eat_error == EM_ERROR_MEMORY_VERIFICATION_FAILED) {
         print_and_exit("Memory verification failed - a byte read back did not match the value written", EM_ERROR_MEMORY_VERIFICATION_FAILED);
@@ -149,5 +217,6 @@ int main(int argc, char *argv[]){
             }
         }
     }
-    digest(eaten, show_progress);
+    digest(eaten, progress_events);
+    terminal_progress_finish(&terminal_progress);
 }
