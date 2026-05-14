@@ -54,18 +54,29 @@ COMMON_SRC := $(filter-out $(BACKEND_SRC),$(wildcard $(SRC_DIR)/*.c))
 ifndef SYS_SRC
     ifeq ($(SYS_OS),SunOS)
         SYS_SRC := $(SRC_DIR)/eatmemory.solaris.c
+        SYS_BACKEND := SunOS
     else ifeq ($(SYS_OS),AIX)
         SYS_SRC := $(SRC_DIR)/eatmemory.aix.c
+        SYS_BACKEND := AIX
     else ifeq ($(SYS_OS),Linux)
         SYS_SRC := $(SRC_DIR)/eatmemory.linux.c
+        SYS_BACKEND := Linux
     else ifeq ($(SYS_OS),Darwin)
         SYS_SRC := $(SRC_DIR)/eatmemory.apple.c
+        SYS_BACKEND := Darwin
     else ifneq ($(filter Windows MINGW% MSYS%,$(SYS_OS)),)
         SYS_SRC := $(SRC_DIR)/eatmemory.windows.c
+        SYS_BACKEND := Windows
     else
         SYS_SRC := $(SRC_DIR)/eatmemory.unknown.c
+        SYS_BACKEND := Unkown OS
     endif
 endif
+SYS_BACKEND ?= $(patsubst eatmemory.%.c,%,$(notdir $(SYS_SRC)))
+ifeq ($(SYS_BACKEND),unknown)
+    SYS_BACKEND := Unkown OS
+endif
+CFLAGS += -DSYSMEM_BACKEND='"$(SYS_BACKEND)"'
 
 ifeq ($(notdir $(SYS_SRC)),eatmemory.aix.c)
     LDFLAGS += -lperfstat
