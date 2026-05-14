@@ -16,7 +16,7 @@ function test_windows_platform {
   local image="$1"
   echo_test_start "Testing Windows platform: $image"
   
-  docker run --rm -v "$SCRIPT_DIR/../:/src" dockcross/$image bash -c '
+  docker run --rm -v "$SCRIPT_DIR/../..:/src" dockcross/$image bash -c '
     set -e
     cd /src
     

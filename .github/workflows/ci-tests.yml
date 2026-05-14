@@ -1,4 +1,4 @@
-name: Simple Run Test
+name: CI Tests
 
 on:
   push:
@@ -11,7 +11,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  simple-run-test:
+  ci-tests:
     strategy:
       fail-fast: false
       matrix:
@@ -70,17 +70,17 @@ jobs:
             git
             make
 
-      - name: Run simple test (Unix)
+      - name: Run CI tests (Unix)
         if: runner.os != 'Windows'
         env:
           EXTRA_CFLAGS: ${{ matrix.extra_cflags }}
-        run: bash test/simple.test.sh
+        run: bash test/ci/all.test.sh
 
-      - name: Run simple test (MSYS2)
+      - name: Run CI tests (MSYS2)
         if: runner.os == 'Windows' && matrix.windows_env == 'msys2'
         shell: msys2 {0}
-        run: bash test/simple.test.sh
+        run: bash test/ci/all.test.sh
 
-      - name: Run simple test (Cygwin)
+      - name: Run CI tests (Cygwin)
         if: runner.os == 'Windows' && matrix.windows_env == 'cygwin'
-        run: bash test/simple.test.sh
+        run: bash test/ci/all.test.sh
