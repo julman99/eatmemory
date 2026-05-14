@@ -1,5 +1,4 @@
 #include "eatmemory.h"
-#ifdef SYSMEM_MODE_LINUX
 #include <unistd.h>
 
 static size_t pages_to_bytes_clamped(long pages, long page_size) {
@@ -22,5 +21,3 @@ void get_system_memory_stats(struct system_memory_stats* stats) {
     }
 #endif
 }
-
-#endif

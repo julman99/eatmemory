@@ -1,5 +1,4 @@
 #include "eatmemory.h"
-#ifdef SYSMEM_MODE_AIX
 #include <libperfstat.h>
 
 /* libperfstat always reports real_total/real_free in 4 KB units regardless
@@ -30,5 +29,3 @@ void get_system_memory_stats(struct system_memory_stats* stats) {
     stats->free = pages_4k_to_bytes_clamped(memory.real_free);
     stats->supported = true;
 }
-
-#endif

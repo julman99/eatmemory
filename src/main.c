@@ -35,9 +35,11 @@ void print_help() {
     printf("#                # Bytes      example: 1024\n");
     printf("#M               # Megabytes  example: 15M\n");
     printf("#G               # Gigabytes  example: 2G\n");
-#ifndef SYSMEM_MODE_UNKNOWN
-    printf("#%%               # Percent    example: 50%%\n");
-#endif
+    struct system_memory_stats memory_stats;
+    get_system_memory_stats(&memory_stats);
+    if (memory_stats.supported) {
+        printf("#%%               # Percent    example: 50%%\n");
+    }
     printf("\n");
     printf("Options:\n");
     printf("-t <seconds>     Exit after specified number of seconds.\n");
@@ -119,4 +121,3 @@ int main(int argc, char *argv[]){
     }
     digest(eaten);
 }
-
