@@ -113,13 +113,15 @@ int main(int argc, char *argv[]){
 
     ap_free(parser);
 
+    bool show_progress = isatty(fileno(stdout));
+
     print_memory_summary(&backend);
     printf("\n");
 
     printf("Eating %s in chunks of %s...\n", bytes_to_string(size, BYTES_TMP_STR()), bytes_to_string(chunk_size, BYTES_TMP_STR()));
 
     eatmemory_error eat_error = EM_ERROR_NONE;
-    struct allocation eaten = eat_with_options(size, chunk_size, lock_memory, &eat_error);
+    struct allocation eaten = eat(size, chunk_size, lock_memory, show_progress, &eat_error);
 
     if(eat_error == EM_ERROR_MEMORY_VERIFICATION_FAILED) {
         print_and_exit("Memory verification failed - a byte read back did not match the value written", EM_ERROR_MEMORY_VERIFICATION_FAILED);
@@ -147,5 +149,5 @@ int main(int argc, char *argv[]){
             }
         }
     }
-    digest(eaten);
+    digest(eaten, show_progress);
 }

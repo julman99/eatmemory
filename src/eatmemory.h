@@ -58,7 +58,6 @@ struct allocation {
 
 size_t get_auto_chunk_size(size_t bytes);
 size_t get_chunk_size(size_t total, size_t chunk_size, size_t chunk_index);
-struct allocation eat(size_t total, size_t chunk_size, eatmemory_error* error);
-struct allocation eat_with_options(size_t total, size_t chunk_size, bool lock_memory, eatmemory_error* error);
-void digest(struct allocation alloc);
+struct allocation eat(size_t total, size_t chunk_size, bool lock_memory, bool show_progress, eatmemory_error* error);
+void digest(struct allocation alloc, bool show_progress);
 #endif

@@ -226,7 +226,7 @@ static void test_zero_chunk_size(void) {
     reset_allocator();
 
     eatmemory_error error = EM_ERROR_NONE;
-    struct allocation allocation = eat(100, 0, &error);
+    struct allocation allocation = eat(100, 0, false, false, &error);
 
     CHECK(error == EM_ERROR_CHUNK_SIZE_ARG_INVALID);
     CHECK(allocation.chunks == NULL);
@@ -239,7 +239,7 @@ static void test_one_exact_chunk(void) {
     reset_allocator();
 
     eatmemory_error error = EM_ERROR_NONE;
-    struct allocation allocation = eat(1024, 1024, &error);
+    struct allocation allocation = eat(1024, 1024, false, false, &error);
 
     CHECK(error == EM_ERROR_NONE);
     check_successful_eat(allocation, 1);
@@ -247,7 +247,7 @@ static void test_one_exact_chunk(void) {
     CHECK_SIZE(malloc_sizes[0], sizeof(uint8_t*) * 1);
     CHECK_SIZE(malloc_sizes[1], 1024);
 
-    digest(allocation);
+    digest(allocation, false);
     CHECK_SIZE(free_call_count, 2);
     check_all_successful_allocations_freed();
 }
@@ -256,7 +256,7 @@ static void test_multiple_exact_chunks(void) {
     reset_allocator();
 
     eatmemory_error error = EM_ERROR_NONE;
-    struct allocation allocation = eat(4096, 1024, &error);
+    struct allocation allocation = eat(4096, 1024, false, false, &error);
 
     CHECK(error == EM_ERROR_NONE);
     check_successful_eat(allocation, 4);
@@ -266,7 +266,7 @@ static void test_multiple_exact_chunks(void) {
         CHECK_SIZE(malloc_sizes[i], 1024);
     }
 
-    digest(allocation);
+    digest(allocation, false);
     CHECK_SIZE(free_call_count, 5);
     check_all_successful_allocations_freed();
 }
@@ -275,7 +275,7 @@ static void test_smaller_final_chunk(void) {
     reset_allocator();
 
     eatmemory_error error = EM_ERROR_NONE;
-    struct allocation allocation = eat(4097, 1024, &error);
+    struct allocation allocation = eat(4097, 1024, false, false, &error);
 
     CHECK(error == EM_ERROR_NONE);
     check_successful_eat(allocation, 5);
@@ -287,7 +287,7 @@ static void test_smaller_final_chunk(void) {
     CHECK_SIZE(malloc_sizes[4], 1024);
     CHECK_SIZE(malloc_sizes[5], 1);
 
-    digest(allocation);
+    digest(allocation, false);
     CHECK_SIZE(free_call_count, 6);
     check_all_successful_allocations_freed();
 }
@@ -301,7 +301,7 @@ static void test_auto_chunk_boundary(void) {
 
     eatmemory_error error = EM_ERROR_NONE;
     size_t chunk_size = get_auto_chunk_size(ONE_MB_BYTES + 1);
-    struct allocation allocation = eat(ONE_MB_BYTES + 1, chunk_size, &error);
+    struct allocation allocation = eat(ONE_MB_BYTES + 1, chunk_size, false, false, &error);
 
     CHECK(error == EM_ERROR_NONE);
     check_successful_eat(allocation, 2);
@@ -310,7 +310,7 @@ static void test_auto_chunk_boundary(void) {
     CHECK_SIZE(malloc_sizes[1], ONE_MB_BYTES);
     CHECK_SIZE(malloc_sizes[2], 1);
 
-    digest(allocation);
+    digest(allocation, false);
     CHECK_SIZE(free_call_count, 3);
     check_all_successful_allocations_freed();
 }
@@ -320,7 +320,7 @@ static void test_pointer_array_allocation_failure(void) {
     fail_malloc_call = 1;
 
     eatmemory_error error = EM_ERROR_NONE;
-    struct allocation allocation = eat(4096, 1024, &error);
+    struct allocation allocation = eat(4096, 1024, false, false, &error);
 
     CHECK(error == EM_ERROR_CANNOT_ALLOCATE_MEMORY);
     CHECK(allocation.chunks == NULL);
@@ -335,7 +335,7 @@ static void test_first_data_chunk_allocation_failure(void) {
     fail_malloc_call = 2;
 
     eatmemory_error error = EM_ERROR_NONE;
-    struct allocation allocation = eat(4096, 1024, &error);
+    struct allocation allocation = eat(4096, 1024, false, false, &error);
 
     CHECK(error == EM_ERROR_CANNOT_ALLOCATE_MEMORY);
     CHECK(allocation.chunks == NULL);
@@ -352,7 +352,7 @@ static void test_later_data_chunk_allocation_failure(void) {
     fail_malloc_call = 4;
 
     eatmemory_error error = EM_ERROR_NONE;
-    struct allocation allocation = eat(4096, 1024, &error);
+    struct allocation allocation = eat(4096, 1024, false, false, &error);
 
     CHECK(error == EM_ERROR_CANNOT_ALLOCATE_MEMORY);
     CHECK(allocation.chunks == NULL);
@@ -372,7 +372,7 @@ static void test_huge_iteration_guard(void) {
     reset_allocator();
 
     eatmemory_error error = EM_ERROR_NONE;
-    struct allocation allocation = eat(SIZE_MAX, 1, &error);
+    struct allocation allocation = eat(SIZE_MAX, 1, false, false, &error);
 
     CHECK(error == EM_ERROR_CANNOT_ALLOCATE_MEMORY);
     CHECK(allocation.chunks == NULL);
@@ -385,13 +385,13 @@ static void test_byte_pattern_written(void) {
     reset_allocator();
 
     eatmemory_error error = EM_ERROR_NONE;
-    struct allocation allocation = eat(300, 100, &error);
+    struct allocation allocation = eat(300, 100, false, false, &error);
 
     CHECK(error == EM_ERROR_NONE);
     check_successful_eat(allocation, 3);
     check_byte_pattern(allocation, 300, 100);
 
-    digest(allocation);
+    digest(allocation, false);
     CHECK_SIZE(free_call_count, 4);
     check_all_successful_allocations_freed();
 }
@@ -400,14 +400,14 @@ static void test_eat_does_not_lock_by_default(void) {
     reset_allocator();
 
     eatmemory_error error = EM_ERROR_NONE;
-    struct allocation allocation = eat(300, 100, &error);
+    struct allocation allocation = eat(300, 100, false, false, &error);
 
     CHECK(error == EM_ERROR_NONE);
     check_successful_eat(allocation, 3);
     CHECK_SIZE(lock_call_count, 0);
     CHECK_SIZE(allocation.locked_count, 0);
 
-    digest(allocation);
+    digest(allocation, false);
     CHECK_SIZE(unlock_call_count, 0);
     CHECK_SIZE(free_call_count, 4);
     check_all_successful_allocations_freed();
@@ -417,7 +417,7 @@ static void test_lock_memory_success(void) {
     reset_allocator();
 
     eatmemory_error error = EM_ERROR_NONE;
-    struct allocation allocation = eat_with_options(4097, 1024, true, &error);
+    struct allocation allocation = eat(4097, 1024, true, false, &error);
 
     CHECK(error == EM_ERROR_NONE);
     check_successful_eat(allocation, 5);
@@ -434,7 +434,7 @@ static void test_lock_memory_success(void) {
     CHECK_SIZE(lock_sizes[3], 1024);
     CHECK_SIZE(lock_sizes[4], 1);
 
-    digest(allocation);
+    digest(allocation, false);
     check_locked_chunks_unlocked_once(5);
     CHECK_SIZE(free_call_count, 6);
     check_all_successful_allocations_freed();
@@ -445,14 +445,15 @@ static void test_lock_memory_failure_cleans_up(void) {
     fail_lock_call = 3;
 
     eatmemory_error error = EM_ERROR_NONE;
-    struct allocation allocation = eat_with_options(4096, 1024, true, &error);
+    struct allocation allocation = eat(4096, 1024, true, false, &error);
 
     CHECK(error == EM_ERROR_CANNOT_LOCK_MEMORY);
     CHECK(allocation.chunks == NULL);
     CHECK_SIZE(allocation.count, 0);
+    CHECK_SIZE(malloc_call_count, 4);
     CHECK_SIZE(lock_call_count, 3);
     check_locked_chunks_unlocked_once(2);
-    CHECK_SIZE(free_call_count, 5);
+    CHECK_SIZE(free_call_count, 4);
     check_all_successful_allocations_freed();
 }
 
@@ -461,14 +462,15 @@ static void test_lock_memory_unsupported_cleans_up(void) {
     forced_lock_result = EM_LOCK_UNSUPPORTED;
 
     eatmemory_error error = EM_ERROR_NONE;
-    struct allocation allocation = eat_with_options(4096, 1024, true, &error);
+    struct allocation allocation = eat(4096, 1024, true, false, &error);
 
     CHECK(error == EM_ERROR_MEMORY_LOCK_UNSUPPORTED);
     CHECK(allocation.chunks == NULL);
     CHECK_SIZE(allocation.count, 0);
+    CHECK_SIZE(malloc_call_count, 2);
     CHECK_SIZE(lock_call_count, 1);
     CHECK_SIZE(unlock_call_count, 0);
-    CHECK_SIZE(free_call_count, 5);
+    CHECK_SIZE(free_call_count, 2);
     check_all_successful_allocations_freed();
 }
 
