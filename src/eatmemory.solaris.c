@@ -1,6 +1,7 @@
 #include "eatmemory.h"
 #include <unistd.h>
 
+#if defined(_SC_PHYS_PAGES) && defined(_SC_AVPHYS_PAGES) && defined(_SC_PAGE_SIZE)
 static size_t pages_to_bytes_clamped(long pages, long page_size) {
     uint64_t bytes = (uint64_t)pages * (uint64_t)page_size;
     return bytes > SIZE_MAX ? SIZE_MAX : (size_t)bytes;
@@ -27,5 +28,21 @@ enum eatmemory_stats_result eatmemory_get_system_memory_stats(struct system_memo
 
     return EM_STATS_FAILED;
 }
+
+#else
+
+void eatmemory_get_backend_capabilities(struct eatmemory_backend* backend) {
+    backend->memory_stats_supported = false;
+    backend->memory_lock_supported = true;
+}
+
+enum eatmemory_stats_result eatmemory_get_system_memory_stats(struct system_memory_stats* stats) {
+    stats->total = 0;
+    stats->free = 0;
+
+    return EM_STATS_UNSUPPORTED;
+}
+
+#endif
 
 #include "eatmemory.posix-common.c"
