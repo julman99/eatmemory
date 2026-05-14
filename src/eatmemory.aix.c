@@ -14,8 +14,12 @@ static size_t pages_4k_to_bytes_clamped(u_longlong_t pages) {
     return (size_t)(pages * AIX_PERFSTAT_PAGE_SIZE);
 }
 
-void get_system_memory_stats(struct system_memory_stats* stats) {
-    stats->supported = false;
+void eatmemory_init(struct eatmemory_backend* backend) {
+    backend->memory_stats_supported = true;
+    backend->memory_lock_supported = true;
+}
+
+void eatmemory_get_system_memory_stats(struct system_memory_stats* stats) {
     stats->total = 0;
     stats->free = 0;
 
@@ -27,5 +31,6 @@ void get_system_memory_stats(struct system_memory_stats* stats) {
 
     stats->total = pages_4k_to_bytes_clamped(memory.real_total);
     stats->free = pages_4k_to_bytes_clamped(memory.real_free);
-    stats->supported = true;
 }
+
+#include "eatmemory.posix-common.c"
