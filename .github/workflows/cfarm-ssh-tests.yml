@@ -25,7 +25,7 @@ jobs:
             extra_cflags: ""
             shell: /opt/freeware/bin/bash
             path: /opt/freeware/bin:/usr/bin:/bin
-            test_script: test/simple.test.sh
+            test_script: test/ci/all.test.sh
           - name: aix-64
             host: cfarm119.cfarm.net
             host_key: cfarm119.cfarm.net ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIB3/qHMdOGpZ8DD5E8J7falo8IDJ962oGsgSycuHXXRO
@@ -34,7 +34,7 @@ jobs:
             extra_cflags: -maix64
             shell: /opt/freeware/bin/bash
             path: /opt/freeware/bin:/usr/bin:/bin
-            test_script: test/simple.test.sh
+            test_script: test/ci/all.test.sh
           - name: solaris-64
             host: cfarm215.cfarm.net
             host_key: cfarm215.cfarm.net ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHaWRY0hu3p8Nf8NOHQY4rNT5Ph+M5uL+Hjl0fnROCZv
@@ -43,7 +43,7 @@ jobs:
             extra_cflags: -m64
             shell: /usr/bin/bash
             path: /usr/bin:/bin:/usr/sbin:/sbin
-            test_script: test/simple.test.sh
+            test_script: test/ci/all.test.sh
           - name: solaris-32
             host: cfarm215.cfarm.net
             host_key: cfarm215.cfarm.net ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHaWRY0hu3p8Nf8NOHQY4rNT5Ph+M5uL+Hjl0fnROCZv
@@ -52,7 +52,7 @@ jobs:
             extra_cflags: -m32
             shell: /usr/bin/bash
             path: /usr/bin:/bin:/usr/sbin:/sbin
-            test_script: test/simple.test.sh
+            test_script: test/ci/all.test.sh
 
     concurrency:
       group: cfarm-${{ matrix.host }}

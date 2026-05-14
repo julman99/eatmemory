@@ -12,6 +12,24 @@
 #define TO_MB (1024UL * TO_KB)
 #define TO_GB (1024UL * TO_MB)
 
+#ifndef EATMEMORY_MALLOC
+#define EATMEMORY_MALLOC malloc
+#define EATMEMORY_MALLOC_IS_DEFAULT
+#endif
+
+#ifndef EATMEMORY_FREE
+#define EATMEMORY_FREE free
+#define EATMEMORY_FREE_IS_DEFAULT
+#endif
+
+#ifndef EATMEMORY_MALLOC_IS_DEFAULT
+void *EATMEMORY_MALLOC(size_t size);
+#endif
+
+#ifndef EATMEMORY_FREE_IS_DEFAULT
+void EATMEMORY_FREE(void *ptr);
+#endif
+
 size_t string_to_bytes(char * str, eatmemory_error* error) {
     if (str == NULL) {
         *error = EM_ERROR_PARSE_SYNTAX;
@@ -176,7 +194,7 @@ struct allocation eat(size_t total, size_t chunk_size, eatmemory_error* error) {
         *error = EM_ERROR_CANNOT_ALLOCATE_MEMORY;
         return result;
     }
-    uint8_t** allocations = malloc(sizeof(uint8_t *) * iterations);
+    uint8_t** allocations = EATMEMORY_MALLOC(sizeof(uint8_t *) * iterations);
     if(allocations == NULL) {
         *error = EM_ERROR_CANNOT_ALLOCATE_MEMORY;
         return result;
@@ -194,7 +212,7 @@ struct allocation eat(size_t total, size_t chunk_size, eatmemory_error* error) {
     size_t allocated = 0;
     for(size_t i=0; i<iterations; i++){
         size_t allocate = MIN(chunk_size, total - allocated);
-        uint8_t *buffer = malloc(sizeof(uint8_t) * allocate);
+        uint8_t *buffer = EATMEMORY_MALLOC(sizeof(uint8_t) * allocate);
         if(buffer == NULL){
             digest(result);
             *error = EM_ERROR_CANNOT_ALLOCATE_MEMORY;
@@ -254,8 +272,8 @@ void digest(struct allocation alloc) {
     }
     for(size_t i=0; i < alloc.count; i++){
         if(alloc.chunks[i] != NULL) {
-            free(alloc.chunks[i]);
+            EATMEMORY_FREE(alloc.chunks[i]);
         }
     }
-    free(alloc.chunks);
+    EATMEMORY_FREE(alloc.chunks);
 }

@@ -1,0 +1,255 @@
+name: Release Binaries
+
+on:
+  push:
+    tags: [ 'v*' ]
+
+permissions:
+  contents: write
+
+jobs:
+  build-linux:
+    name: Linux ${{ matrix.target }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: linux-x86_64
+            runner: ubuntu-24.04
+            extra_cflags: ""
+            packages: build-essential gcc make
+          - target: linux-aarch64
+            runner: ubuntu-24.04-arm
+            extra_cflags: ""
+            packages: build-essential gcc make
+          - target: linux-i686
+            runner: ubuntu-24.04
+            extra_cflags: "-m32"
+            packages: build-essential gcc make gcc-multilib
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ${{ matrix.packages }}
+
+      - name: Build
+        env:
+          EXTRA_CFLAGS: ${{ matrix.extra_cflags }}
+        run: |
+          make clean
+          make
+          output/eatmemory 10M -t 0
+
+      - name: Package
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          asset="eatmemory-${version}-${{ matrix.target }}"
+          mkdir -p "dist/${asset}"
+          cp output/eatmemory "dist/${asset}/eatmemory"
+          tar -C dist -czf "dist/${asset}.tar.gz" "${asset}"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.target }}
+          path: dist/*.tar.gz
+          if-no-files-found: error
+
+  build-windows:
+    name: Windows ${{ matrix.target }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: windows-x86_64
+            runner: windows-latest
+            msystem: UCRT64
+            cc: gcc
+            packages: >-
+              mingw-w64-ucrt-x86_64-gcc
+              make
+              bash
+          - target: windows-i686
+            runner: windows-latest
+            msystem: MINGW32
+            cc: gcc
+            packages: >-
+              mingw-w64-i686-gcc
+              make
+              bash
+          - target: windows-arm64
+            runner: windows-11-arm
+            msystem: CLANGARM64
+            cc: clang
+            packages: >-
+              mingw-w64-clang-aarch64-clang
+              make
+              bash
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup MSYS2
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: ${{ matrix.msystem }}
+          update: true
+          install: ${{ matrix.packages }}
+
+      - name: Build
+        shell: msys2 {0}
+        env:
+          CC: ${{ matrix.cc }}
+        run: |
+          make clean
+          make
+          output/eatmemory.exe 10M -t 0
+
+      - name: Package
+        shell: pwsh
+        run: |
+          $version = $env:GITHUB_REF_NAME -replace '^v', ''
+          $asset = "eatmemory-$version-${{ matrix.target }}"
+          New-Item -ItemType Directory -Force -Path "dist/$asset" | Out-Null
+          Copy-Item output/eatmemory.exe "dist/$asset/eatmemory.exe"
+          Compress-Archive -Path "dist/$asset" -DestinationPath "dist/$asset.zip" -Force
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.target }}
+          path: dist/*.zip
+          if-no-files-found: error
+
+  build-macos:
+    name: macOS ${{ matrix.target }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: macos-x86_64
+            runner: macos-15-intel
+            raw_artifact: raw-macos-x86_64
+          - target: macos-arm64
+            runner: macos-15
+            raw_artifact: raw-macos-arm64
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Build
+        run: |
+          make clean
+          make
+          output/eatmemory 10M -t 0
+
+      - name: Package
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          asset="eatmemory-${version}-${{ matrix.target }}"
+          mkdir -p "dist/${asset}" raw
+          cp output/eatmemory "dist/${asset}/eatmemory"
+          cp output/eatmemory raw/eatmemory
+          tar -C dist -czf "dist/${asset}.tar.gz" "${asset}"
+
+      - name: Upload release artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.target }}
+          path: dist/*.tar.gz
+          if-no-files-found: error
+
+      - name: Upload raw binary for universal build
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.raw_artifact }}
+          path: raw/eatmemory
+          if-no-files-found: error
+
+  build-macos-universal:
+    name: macOS universal
+    runs-on: macos-15
+    needs: build-macos
+
+    steps:
+      - name: Download x86_64 binary
+        uses: actions/download-artifact@v4
+        with:
+          name: raw-macos-x86_64
+          path: raw/macos-x86_64
+
+      - name: Download arm64 binary
+        uses: actions/download-artifact@v4
+        with:
+          name: raw-macos-arm64
+          path: raw/macos-arm64
+
+      - name: Create universal binary
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          asset="eatmemory-${version}-macos-universal"
+          mkdir -p "dist/${asset}"
+          lipo -create \
+            raw/macos-x86_64/eatmemory \
+            raw/macos-arm64/eatmemory \
+            -output "dist/${asset}/eatmemory"
+          lipo -info "dist/${asset}/eatmemory"
+          tar -C dist -czf "dist/${asset}.tar.gz" "${asset}"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-macos-universal
+          path: dist/*.tar.gz
+          if-no-files-found: error
+
+  publish-release:
+    name: Publish GitHub Release
+    runs-on: ubuntu-latest
+    needs:
+      - build-linux
+      - build-windows
+      - build-macos
+      - build-macos-universal
+
+    steps:
+      - name: Download release artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: release-*
+          path: dist
+          merge-multiple: true
+
+      - name: Generate checksums
+        run: |
+          cd dist
+          sha256sum -- * > checksums.txt
+          cat checksums.txt
+
+      - name: Create or update release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" dist/* --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" dist/* \
+              --verify-tag \
+              --title "$GITHUB_REF_NAME" \
+              --generate-notes
+          fi
