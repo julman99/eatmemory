@@ -1,6 +1,7 @@
 #include "eatmemory.h"
 #include <mach/mach_host.h>
 #include <mach/mach_init.h>
+#include <mach/mach_port.h>
 
 void get_system_memory_stats(struct system_memory_stats* stats) {
     vm_size_t page_size;
@@ -9,6 +10,7 @@ void get_system_memory_stats(struct system_memory_stats* stats) {
 
     if (host_page_size(host_port, &page_size) != KERN_SUCCESS) {
         stats->supported = false;
+        mach_port_deallocate(mach_task_self(), host_port);
         return;
     }
     vm_statistics_data_t vm_stat;
@@ -16,8 +18,10 @@ void get_system_memory_stats(struct system_memory_stats* stats) {
     count = sizeof(vm_stat) / sizeof(natural_t);
     if (host_statistics(host_port, HOST_VM_INFO, (host_info_t)&vm_stat, &count) != KERN_SUCCESS) {
         stats->supported = false;
+        mach_port_deallocate(mach_task_self(), host_port);
         return;
     }
+    mach_port_deallocate(mach_task_self(), host_port);
     stats->supported = true;
 
     natural_t pages = vm_stat.wire_count + vm_stat.active_count + vm_stat.inactive_count + vm_stat.free_count +
