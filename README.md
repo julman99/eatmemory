@@ -93,7 +93,7 @@ Size accepts a unit suffix:
 | ----------------- | ---------------------------------------------------------- |
 | `-t <seconds>`    | Exit automatically after the given number of seconds.      |
 | `-s <chunk-size>` | Allocate in chunks of this size (same format as `<size>`). |
-| `--lock-memory`   | Lock allocated pages in physical memory, when supported.   |
+| `-l`, `--lock-memory` | Lock allocated pages in physical memory, when supported. |
 | `-h`, `--help`    | Show usage and exit.                                       |
 
 ### Exit codes
