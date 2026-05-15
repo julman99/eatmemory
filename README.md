@@ -144,4 +144,4 @@ docker build . -t eatmemory
 
 ## Support this project
 
-Bitcoin: `14LFRrMX3HmyAH9zQsnzYoVKDH6bVWiBu3`
+Bitcoin: `35Xw9tPCEeUog5CwyRP1Eey7WYEfFuHuHL`
